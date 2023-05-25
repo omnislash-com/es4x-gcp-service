@@ -10,10 +10,8 @@ import { MultiMap } from '@vertx/core';
 import { Buffer } from '@vertx/core';
 import { UrlUtils } from '../utils/UrlUtils';
 
-class	AppContext
+class	AbstractServiceContext
 {
-
-
 	static	get	DB_OMNISLASH_USERS_OLD()		{	return "db_omni_users_old"; }
 
 	static	get	SERVICE_REPORT_BUILDER()		{	return "report-builder"; }
@@ -1604,5 +1602,5 @@ class	AppContext
 }
 
 module.exports = {
-	AppContext
+	AbstractServiceContext
 };

@@ -1,26 +1,33 @@
-import { AppContext } from '../app/AppContext';
+import { AbstractServiceContext } from './AbstractServiceContext';
 import { AbstractModel } from '../model/AbstractModel';
-import { QueryUtils } from '../app/QueryUtils';
-import { ObjUtils } from '../utils/ObjUtils';
-import { DateUtils } from '../utils/DateUtils';
-import { StringUtils } from '../utils/StringUtils';
 
-class	AppService
+import { LogUtils } from 'es4x-utils/src/utils/LogUtils';
+import { ObjUtils } from 'es4x-utils/src/utils/ObjUtils';
+import { DateUtils } from 'es4x-utils/src/utils/DateUtils';
+import { StringUtils } from 'es4x-utils/src/utils/StringUtils';
+import { QueryUtils } from 'es4x-utils/src/network/QueryUtils';
+
+class	AbstractService
 {
 	/**
-	 * @param {AppContext} _appContext
+	 * @param {AbstractServiceContext} _context
 	*/	
-	constructor(_appContext)
+	constructor(_context)
 	{
-		this.__appContext = _appContext;
+		this.__context = _context;
 		this.__authInfo = null;
 		this.__subscribers = {};
 
 		// set the main service to the context
-		this.__appContext.setMainService(this);
+		this.getContext().setMainService(this);
 
 		// create the models
 		this.createModels();
+	}
+
+	getServiceCode()
+	{
+		throw new Error("Abstract Method has no implementation");
 	}
 
 	createLog(_payload = null, _model = "")
@@ -46,51 +53,51 @@ class	AppService
 	{
 		let	finalMessage = this.createLogMessage(_message, _model);
 		let	data = this.createLog(_payload, _model);
-		ObjUtils.Log(finalMessage, data);
+		LogUtils.Log(finalMessage, data);
 	}
 
 	logWarning(_message, _payload = null, _model = "")
 	{
 		let	finalMessage = this.createLogMessage(_message, _model);
 		let	data = this.createLog(_payload, _model);
-		ObjUtils.LogWarning(finalMessage, data);
+		LogUtils.LogWarning(finalMessage, data);
 	}
 
 	logError(_message, _payload = null, _model = "")
 	{
 		let	finalMessage = this.createLogMessage(_message, _model);
 		let	data = this.createLog(_payload, _model);
-		ObjUtils.LogError(finalMessage, data);
+		LogUtils.LogError(finalMessage, data);
 	}
 
 	logException(_e)
 	{
-		ObjUtils.LogException(_e);
+		LogUtils.LogException(_e);
 	}
 
 	async	cache_del(_category, _key)
 	{
-		return await this.__appContext.cache_del(_category, _key);
+		return await this.getContext().cache_del(_category, _key);
 	}
 
 	async	cache_set(_category, _key, _val, _expirationSec = 0)
 	{
-		return await this.__appContext.cache_set(_category, _key, _val, _expirationSec);
+		return await this.getContext().cache_set(_category, _key, _val, _expirationSec);
 	}
 
 	async	cache_get(_category, _key, _default = null)
 	{
-		return await this.__appContext.cache_get(_category, _key, _default);
+		return await this.getContext().cache_get(_category, _key, _default);
 	}
 
 	async	cache_setMulti(_category, _keyValues, _expirationSec = 0)
 	{
-		return await this.__appContext.cache_setMulti(_category, _keyValues, _expirationSec);
+		return await this.getContext().cache_setMulti(_category, _keyValues, _expirationSec);
 	}
 
 	async	cache_getMulti(_category, _keys)
 	{
-		return await this.__appContext.cache_getMulti(_category, _keys);
+		return await this.getContext().cache_getMulti(_category, _keys);
 	}
 
 	createModels()
@@ -105,17 +112,12 @@ class	AppService
 
 	getConfig(_key, _default = null)
 	{
-		return this.__appContext.getConfig(_key, _default);
+		return this.getContext().getConfig(_key, _default);
 	}
 
-	getAppContext()
+	getContext()
 	{
-		return this.__appContext;
-	}
-
-	getServiceCode()
-	{
-		throw new Error("Abstract Method has no implementation");
+		return this.__context;
 	}
 
 	createModelMgr()
@@ -130,7 +132,7 @@ class	AppService
 
 	getGoogleApi()
 	{
-		return this.__appContext.getGoogleApi();
+		return this.getContext().getGoogleApi();
 	}
 
 	async	isVisitorAuthorized(_ctx, _requirements)
@@ -176,7 +178,7 @@ class	AppService
 
 	isAdmin(_filters)
 	{
-		return this.__appContext.filtersContainAdminKey(_filters);
+		return this.getContext().filtersContainAdminKey(_filters);
 	}
 
 	async	do(_query, _model, _action)
@@ -333,7 +335,7 @@ class	AppService
 		{
 			let authUserId = this.getAuthUserId();
 
-			await this.__appContext.forwardQueryToService(_service, _ctx, null, _postProcessing, authUserId, _preProcessing, _cachePostProcessing);
+			await this.getContext().forwardQueryToService(_service, _ctx, null, _postProcessing, authUserId, _preProcessing, _cachePostProcessing);
 		}
 	}
 
@@ -423,7 +425,7 @@ class	AppService
 	async	createTaskProcess(_service, _model, _action, _filters = {}, _data = {}, _callbackInfo = null, _delaySec = 0, _priority = 1)
 	{
 		// create the task
-		return await this.getAppContext().createTaskProcess(_service, _model, _action, _filters, _data, _callbackInfo, _delaySec, _priority);
+		return await this.getContext().createTaskProcess(_service, _model, _action, _filters, _data, _callbackInfo, _delaySec, _priority);
 	}
 
 	async	executeEndpointPubSub(_ctx)
@@ -442,7 +444,7 @@ class	AppService
 			{
 				// extract and validate the data
 				this.log("Extracting json data...");
-				payloadJson = await this.__appContext.getGoogleApi().extractPayloadFromPubSub(payload);
+				payloadJson = await this.getContext().getGoogleApi().extractPayloadFromPubSub(payload);
 			}
 			else
 			{
@@ -570,25 +572,21 @@ class	AppService
 			await this.processEventRemotely(event);
 	}
 
+	getSubscribersForEvent(_eventCode)
+	{
+		if (ObjUtils.HasProperty(this.__subscribers, _eventCode) == true)
+			return this.__subscribers[_eventCode];
+		else
+			return [];
+	}
+
 	async	processEventLocally(_event)
 	{
 		if (this.__modelMgr == null)
 			return;
 			
 		// get the subscribers
-		let	subscribers = [];
-
-		// is it an USER DELETE REQUEST CREATED, REACTIVATED or DELETED? we get all the models
-		if (AbstractModel.PUBSUB_EVENT_USER_ACTION_LIST.includes(_event["code"]) == true)
-		{
-			subscribers = this.__modelMgr.getAllModelCodes();
-		}
-		// we get only the subscribers
-		else
-		{
-			if (ObjUtils.HasProperty(this.__subscribers, _event["code"]) == true)
-				subscribers = this.__subscribers[_event["code"]];
-		}
+		let	subscribers = this.getSubscribersForEvent(_event["code"]);
 
 		// send them the event
 		for(let i=0; i<subscribers.length; i++)
@@ -617,12 +615,8 @@ class	AppService
 		};
 
 		this.log("Publishing event to pub sub (NEW TASK PROCESSOR)...", payload);
-		let	ret = await this.getAppContext().createGoogleTask(AppContext.SERVICE_TASK_PROCESSOR, "/task/process", payload, 0, queue);
+		let	ret = await this.getContext().createGoogleTask(AppContext.SERVICE_TASK_PROCESSOR, "/task/process", payload, 0, queue);
 		this.log("PubSub publish result: " + ret);
-
-		// publish the event to PUB SUB
-//		this.log("Publishing event to pub sub...", _event);
-//		let	statusCode = await this.__appContext.getGoogleApi().pubSub_publishMessage(this.getServiceCode(), _event);
 	}
 
 	createEventCode(_model, _event, _service = "")
@@ -652,90 +646,35 @@ class	AppService
 
 	async	populateItemsFromInstructions(_items, _instructions)
 	{
-		return await this.__appContext.populateItemsFromInstructions(_items, _instructions, this.getAuthUserId());
+		return await this.getContext().populateItemsFromInstructions(_items, _instructions, this.getAuthUserId());
 	}
 
 	async	populateItems(_items, _type, _fieldId, _fieldTarget, _depthMax = -1)
 	{
-		return await this.__appContext.populateItems(_items, _type, _fieldId, _fieldTarget, this.getAuthUserId(), _depthMax);
+		return await this.getContext().populateItems(_items, _type, _fieldId, _fieldTarget, this.getAuthUserId(), _depthMax);
 	}
 
 	async	getItemInfoBatch(_ids, _type)
 	{
-		return await this.__appContext.getItemInfoBatch(_ids, _type, this.getAuthUserId());
+		return await this.getContext().getItemInfoBatch(_ids, _type, this.getAuthUserId());
 	}
 
 	async	getFromServiceToJson(_service, _path, _queryParams = {}, _port=443)
 	{
-		return await this.__appContext.getFromServiceToJson(_service, _path, _queryParams, _port);
+		return await this.getContext().getFromServiceToJson(_service, _path, _queryParams, _port);
 	}
 
 	async	postFromServiceToJson(_service, _path, _queryParams = {}, _port=443)
 	{
-		return await this.__appContext.postFromServiceToJson(_service, _path, _queryParams, _port);
+		return await this.getContext().postFromServiceToJson(_service, _path, _queryParams, _port);
 	}
-
-	async	callFunctionFromOmniSetData(_function, _params)
-	{
-		let	host = this.getConfig("omnislash.gamedata.host", "");
-		let	path = this.getConfig("omnislash.gamedata.paths." + _function, "");
-
-		if (ObjUtils.IsObject(_params) == false)
-			_params = {};
-
-		// add the key
-		_params["key"] = this.getConfig("omnislash.gamedata.key", "");
-
-		// send the post query
-		let	result = await this.getAppContext().postFromHostToJson(host, path, _params);
-
-		// return the data
-		return ObjUtils.GetValue(result, "data", null);
-	}
-	
-	async	retrieveMatchInfoFromOmniSetData(_userId, _matchId, _view="info")
-	{
-		let	params = {
-			"user_id": _userId.toString(),
-			"match_id": _matchId,
-			"view": _view
-		};
-
-		let	result = await this.callFunctionFromOmniSetData("get_view", params);
-
-		// if the result is not null?
-		let	error = ObjUtils.GetValue(result, "error", "");
-		if (error == "SUCCESS")
-			return result;
-		else
-			return null;
-	}
-
-	async	retrieveMatchDataFromOmniSetData(_userId, _matchId)
-	{
-		let	params = {
-			"action": "get_matchdata",
-			"user_id": _userId.toString(),
-			"match_id": _matchId
-		};
-
-		let	result = await this.callFunctionFromOmniSetData("maintenance", params);
-
-		// if the result is not null?
-		let	matchData = ObjUtils.GetValue(result, "matchdata", null);
-		if (matchData == null)
-			matchData = ObjUtils.GetValue(result, "rawdata", null);
-
-		return matchData;
-	}	
 
 	async	getFromHostToJson(_host, _path, _queryParams = {}, _port=443, _headers={})
 	{
-		return await this.__appContext.getFromHostToJson(_host, _path, _queryParams, _port, _headers);
+		return await this.getContext().getFromHostToJson(_host, _path, _queryParams, _port, _headers);
 	}
-
 }
 
 module.exports = {
-	AppService
+	AbstractService
 };
