@@ -1,8 +1,11 @@
-import { PGDBMgr } from '../db/PGDBMgr';
-import { DateUtils } from '../utils/DateUtils';
-import { ObjUtils } from '../utils/ObjUtils';
-import { StringUtils } from '../utils/StringUtils';
-import { GoogleAPI } from '../google/GoogleAPI';
+
+import { ObjUtils } from 'es4x-utils/src/utils/ObjUtils';
+import { ArrayUtils } from 'es4x-utils/src/utils/ArrayUtils';
+import { DateUtils } from 'es4x-utils/src/utils/DateUtils';
+import { StringUtils } from 'es4x-utils/src/utils/StringUtils';
+import { PGDBMgr } from 'es4x-sdk-pgsql/src/PGDBMgr';
+import { GoogleAPI } from 'es4x-sdk-gcp/src/GoogleAPI';
+
 
 class	AbstractModel
 {
@@ -17,16 +20,6 @@ class	AbstractModel
 
 	static	get	DATASOURCE_PGSQL()			{	return "pgsql";	}
 	static	get	DATASOURCE_FIRESTORE()		{	return "firestore";	}
-
-	static	get	PUBSUB_EVENT_USER_DEACTIVATED()	{	return "api-common.user_delete_request.delete_request_created";	}
-	static	get	PUBSUB_EVENT_USER_REACTIVATED()	{	return "api-common.user_delete_request.delete_request_reactivated";	}
-	static	get	PUBSUB_EVENT_USER_DELETED()		{	return "api-common.user_delete_request.delete_request_deleted";	}
-	static	get	PUBSUB_EVENT_USER_ACTION_LIST()		{	return [
-			AbstractModel.PUBSUB_EVENT_USER_DEACTIVATED,
-			AbstractModel.PUBSUB_EVENT_USER_REACTIVATED,
-			AbstractModel.PUBSUB_EVENT_USER_DELETED,
-		];	
-	}
 
 	constructor(_container)
 	{
@@ -684,7 +677,7 @@ class	AbstractModel
 	async	firestoreGetFirst(_path, _orderBy = [])
 	{
 		let	items = await this.firestoreList(_path, _orderBy, 1);
-		if (ObjUtils.IsArrayEmpty(items) == true)
+		if (ArrayUtils.IsEmpty(items) == true)
 			return null;
 		else
 			return items[0];		
@@ -833,7 +826,7 @@ class	AbstractModel
 
 	async	incrementCounterInIds(_ids, _field, _value, _fieldId = "id")
 	{
-		if ( (ObjUtils.IsArrayEmpty(_ids) == true) || (_value == 0) )
+		if ( (ArrayUtils.IsEmpty(_ids) == true) || (_value == 0) )
 			return;
 
 		// condition based on ID
@@ -900,37 +893,13 @@ class	AbstractModel
 
 	async	onPubSubEvent(_event)
 	{
-		// user DEACTIVATED?
-		if (_event.code == AbstractModel.PUBSUB_EVENT_USER_DEACTIVATED)
-			await this.onEventUserDeactivated(_event.payload);
-		// user REACTIVATED?
-		else if (_event.code == AbstractModel.PUBSUB_EVENT_USER_REACTIVATED)
-			await this.onEventUserReactivated(_event.payload);
-		// user DELETED?
-		else if (_event.code == AbstractModel.PUBSUB_EVENT_USER_DELETED)
-			await this.onEventUserDeleted(_event.payload);
-		else
-			await this.onEvent(_event);
+		// override this to add specific things to do when receiving a pub sub event
+		await this.onEvent(_event);
 	}
 
 	async	onEvent(_event)
 	{
 		// override this method to do specific action when an event is triggered (from subscription)
-	}
-
-	async	onEventUserDeactivated(_payload)
-	{
-		// override to process when a user is DEACTIVATED
-	}
-
-	async	onEventUserReactivated(_payload)
-	{
-		// override to process when a user is REACTIVATED
-	}
-
-	async	onEventUserDeleted(_payload)
-	{
-		// override to process when a user is DELETED
 	}
 
 	async	insertActionToBatchWrite(_filters, _data)
