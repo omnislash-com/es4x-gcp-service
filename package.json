@@ -1,0 +1,33 @@
+{
+	"name": "es4x-gcp-service",
+	"displayName": "ES4X PostgreSQL SDK",
+	"version": "0.1.0",
+	"description": "Interface classes to build a service within a micro-services architecture on GCP using ES4X runtime.",
+	"main": "index.js",
+	"keywords": ["es4x", "javascript", "vertex", "microservice", "gcp"],
+	"author": {
+		"name": "Michael Jegat (Omnislash)",
+		"email": "michael@omnislash.com",
+		"url": "https://omnislash.com"
+	},
+	"dependencies": {
+		"@vertx/core": "4.1.0",
+		"@vertx/pg-client": "4.2.5",
+		"es4x-utils": "git+https://github.com/omnislash-com/es4x-utils.git#main",
+		"es4x-cache": "git+https://github.com/omnislash-com/es4x-cache.git#main",
+		"es4x-sdk-gcp": "git+https://github.com/omnislash-com/es4x-sdk-gcp.git#main",
+		"es4x-sdk-pgsql": "git+https://github.com/omnislash-com/es4x-sdk-pgsql.git#main"
+	},
+	"devDependencies": {
+		"@es4x/create": "0.14.0",
+		"@vertx/unit": "4.1.0"
+	},
+	"mvnDependencies": [
+		"com.fasterxml.jackson.core:jackson-databind:2.9.10.3"
+	],
+	"scripts": {
+		"postinstall": "es4x install",
+		"start": "es4x",
+		"test:PGDB": "es4x test tests/PGDB.test.js"
+	}
+}
