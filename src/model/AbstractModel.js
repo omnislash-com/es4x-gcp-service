@@ -21,15 +21,60 @@ class	AbstractModel
 	static	get	DATASOURCE_PGSQL()			{	return "pgsql";	}
 	static	get	DATASOURCE_FIRESTORE()		{	return "firestore";	}
 
-	constructor(_container)
+	constructor(_service)
 	{
-		this.__container = _container;
+		this.__service = _service;
 		this.__table = this.isFirestore() ? "" : this.getMainTable();
 	}
 
+	getModelCode()
+	{
+		throw new Error("Abstract Method has no implementation");
+	}
+
+	getMainTable()
+	{
+		throw new Error("Abstract Method has no implementation");
+	}	
+
+	getFirestorePath(_filters)
+	{
+		throw new Error("Abstract Method has no implementation");
+	}
+
+	async	canUpdate(_filters, _data)
+	{
+		throw new Error("Abstract Method has no implementation");
+	}
+
+	async	canDelete(_filters)
+	{
+		throw new Error("Abstract Method has no implementation");
+	}
+
+	async	prepareDataForCreate(_filters, _data)
+	{
+		throw new Error("Abstract Method has no implementation");
+	}
+
+	async	list(_filters)
+	{
+		throw new Error("Abstract Method has no implementation");
+	}	
+
+	async	listBatch(_filters, _data)
+	{
+		throw new Error("Abstract Method has no implementation");
+	}	
+
 	getConfig(_key, _default = null)
 	{
-		return this.__container.getConfig(_key, _default);
+		return this.getService().getConfig(_key, _default);
+	}
+
+	getService()
+	{
+		return this.__service;
 	}
 
 	getDataSource()
@@ -44,82 +89,73 @@ class	AbstractModel
 	
 	getDBMgr()
 	{
-		return this.__container.getDBMgr();
+		return this.getService().getDBMgr();
 	}
 
-	getAppContext()
+	getContext()
 	{
-		return this.__container.getAppContext();
+		return this.getService().getContext();
 	}
 
-	getModelCode()
-	{
-		throw new Error("Abstract Method has no implementation");
-	}
 
 	getGoogleApi()
 	{
-		return this.__container.getGoogleApi();
+		return this.getService().getGoogleApi();
 	}
-
-	getMainTable()
-	{
-		throw new Error("Abstract Method has no implementation");
-	}	
 
 	async	cache_del(_category, _key)
 	{
-		return await this.__container.cache_del(_category, _key);
+		return await this.getService().cache_del(_category, _key);
 	}
 
 	async	cache_set(_category, _key, _val, _expirationSec = 0)
 	{
-		return await this.__container.cache_set(_category, _key, _val, _expirationSec);
+		return await this.getService().cache_set(_category, _key, _val, _expirationSec);
 	}
 
 	async	cache_get(_category, _key, _default = null)
 	{
-		return await this.__container.cache_get(_category, _key, _default);
+		return await this.getService().cache_get(_category, _key, _default);
 	}
 
 	async	cache_setMulti(_category, _keyValues, _expirationSec = 0)
 	{
-		return await this.__container.cache_setMulti(_category, _keyValues, _expirationSec);
+		return await this.getService().cache_setMulti(_category, _keyValues, _expirationSec);
 	}
 
 	async	cache_getMulti(_category, _keys)
 	{
-		return await this.__container.cache_getMulti(_category, _keys);
+		return await this.getService().cache_getMulti(_category, _keys);
 	}
 
 	log(_message, _payload = null)
 	{
-		this.__container.log(_message, _payload, this.getModelCode());
+		this.getService().log(_message, _payload, this.getModelCode());
 	}
 
 	logWarning(_message, _payload = null)
 	{
-		this.__container.logWarning(_message, _payload, this.getModelCode());
+		this.getService().logWarning(_message, _payload, this.getModelCode());
 	}
 
 	logError(_message, _payload = null)
 	{
-		this.__container.logError(_message, _payload, this.getModelCode());
+		this.getService().logError(_message, _payload, this.getModelCode());
 	}
 
 	subscribe(_modelCode, _event, _service = "")
 	{
-		this.__container.addSubscriber(this.getModelCode(), _modelCode, _event, _service);
+		this.getService().addSubscriber(this.getModelCode(), _modelCode, _event, _service);
 	}
 
 	isAdmin(_filters)
 	{
-		return this.__container.isAdmin(_filters);
+		return this.getService().isAdmin(_filters);
 	}
 
 	async	doOnModel(_model, _action, _filters, _data = null)
 	{
-		return await this.__container.doOnModel(_model, _action, _filters, _data);
+		return await this.getService().doOnModel(_model, _action, _filters, _data);
 	}
 
 	async	do(_action, _filters, _data, _callbackData = null)
@@ -176,35 +212,10 @@ class	AbstractModel
 		return null;
 	}
 
-	async	canUpdate(_filters, _data)
-	{
-		throw new Error("Abstract Method has no implementation");
-	}
-
-	async	canDelete(_filters)
-	{
-		throw new Error("Abstract Method has no implementation");
-	}
-
-	async	prepareDataForCreate(_filters, _data)
-	{
-		throw new Error("Abstract Method has no implementation");
-	}
-
 	async	prepareDataForUpdate(_filters, _data)
 	{
 		return _data;
 	}
-
-	async	list(_filters)
-	{
-		throw new Error("Abstract Method has no implementation");
-	}	
-
-	async	listBatch(_filters, _data)
-	{
-		throw new Error("Abstract Method has no implementation");
-	}	
 
 	async	getReadQuery(_filters)
 	{
@@ -239,11 +250,6 @@ class	AbstractModel
 			return _filters["code"];
 		else
 			return "";
-	}
-
-	getFirestorePath(_filters)
-	{
-		throw new Error("Abstract Method has no implementation");
 	}
 
 	async	readDb(_filters)
@@ -888,7 +894,7 @@ class	AbstractModel
 	async	pushEvent(_eventType, _payload, _sendRemotely = true)
 	{
 		// pass the event to the service
-		await this.__container.pushEvent(this.getModelCode(), _eventType, _payload, _sendRemotely);
+		await this.getService().pushEvent(this.getModelCode(), _eventType, _payload, _sendRemotely);
 	}
 
 	async	onPubSubEvent(_event)
