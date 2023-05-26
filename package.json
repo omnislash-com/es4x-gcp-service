@@ -28,6 +28,6 @@
 	"scripts": {
 		"postinstall": "es4x install",
 		"start": "es4x",
-		"test:PGDB": "es4x test tests/PGDB.test.js"
+		"test:Service": "es4x test tests/Service.test.js"
 	}
 }

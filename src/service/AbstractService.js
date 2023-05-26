@@ -1,5 +1,5 @@
-import { AbstractServiceContext } from './AbstractServiceContext';
 import { AbstractModel } from '../model/AbstractModel';
+import { ModelMgr } from '../model/ModelMgr';
 
 import { LogUtils } from 'es4x-utils/src/utils/LogUtils';
 import { ObjUtils } from 'es4x-utils/src/utils/ObjUtils';
@@ -9,25 +9,108 @@ import { QueryUtils } from 'es4x-utils/src/network/QueryUtils';
 
 class	AbstractService
 {
-	/**
-	 * @param {AbstractServiceContext} _context
-	*/	
-	constructor(_context)
+	constructor()
 	{
-		this.__context = _context;
+		this.__context = null;
 		this.__authInfo = null;
 		this.__subscribers = {};
 
-		// set the main service to the context
-		this.getContext().setMainService(this);
+		this.__code = "";
+		this.__modelMgr = null;
+	}
 
-		// create the models
-		this.createModels();
+	async	init(_appContext, _env, _configFolder, _modelFolder)
+	{
+		// read the configuration
+		try
+		{
+			// load the SERVICE config: code and models
+			this.log("Loading service...");
+			let	serviceOk = this.loadConfigService(_configFolder, _modelFolder);
+			if (serviceOk == false)
+			{
+				this.logError("Error loading the SERVICE configuration. Verify the file config.service.js!");
+				return false;
+			}
+
+			// load the context
+			this.log("Loading context...");
+			let	contextOk = await this.loadContext(_appContext, _env, _configFolder);
+			if (contextOk == false)
+			{
+				this.logError("Error loading the CONTEXT. Verify the file config." + _env + ".js!");
+				return false;
+			}
+
+			// load the endpoints
+			//TODO
+
+			return true;
+		}
+		catch(e)
+		{
+			console.trace(e);
+			return false;
+		}
+	}
+
+	loadConfigService(_configFolder, _modelFolder)
+	{
+		// load the config
+		let	serviceConfig = require(_configFolder + "config.service.js");
+
+		// save the service code
+		this.__code = ObjUtils.GetValueToString(serviceConfig, "service");
+		if (StringUtils.IsEmpty(this.__code) == true)
+		{
+			this.logError("Error loading the COMMON configuration: the service code is empty!");
+			return false;
+		}
+
+		// create all the models
+		let	modelsConfig = ObjUtils.GetValue(serviceConfig, "models", []);
+		let	modelsOk = this.createModelMgr(modelsConfig, _modelFolder);
+		if (modelsOk == false)
+		{
+			this.logError("Error loading the COMMON configuration: we didn't find any model to add!");
+			return false;
+		}
+
+		// all good
+		return true;
+	}
+
+	async	loadContext(_appContext, _env, _configFolder)
+	{
+		// save the context
+		this.__context = _appContext;
+
+		// load the configuration
+		let	contextConfig = require(_configFolder + "config." + _env + ".js");
+
+		// init the context
+		let	contextOk = await this.__context.init(this, contextConfig);
+
+		return contextOk;
+	}
+
+	createModelMgr(_modelsConfig, _modelFolder)
+	{
+		// create the model manager
+		this.__modelMgr = new ModelMgr(this);
+
+		// init all the models
+		this.__modelMgr.createAllModels(_modelsConfig, _modelFolder);
+	}
+
+	getDBMgr(_connectionKey = "default")
+	{
+		return this.getContext().getPGDBMgr(_connectionKey);
 	}
 
 	getServiceCode()
 	{
-		throw new Error("Abstract Method has no implementation");
+		return this.__code;
 	}
 
 	createLog(_payload = null, _model = "")
@@ -100,16 +183,6 @@ class	AbstractService
 		return await this.getContext().cache_getMulti(_category, _keys);
 	}
 
-	createModels()
-	{
-		// create the model mgr
-		this.__modelMgr = this.createModelMgr();
-
-		// let's create all the models if we can
-		if (this.__modelMgr != null)
-			this.__modelMgr.createAllModels();
-	}
-
 	getConfig(_key, _default = null)
 	{
 		return this.getContext().getConfig(_key, _default);
@@ -118,16 +191,6 @@ class	AbstractService
 	getContext()
 	{
 		return this.__context;
-	}
-
-	createModelMgr()
-	{
-		return null;
-	}
-
-	getDBMgr()
-	{
-		return null;
 	}
 
 	getGoogleApi()

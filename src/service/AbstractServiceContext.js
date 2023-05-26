@@ -10,6 +10,7 @@ import { UrlUtils } from 'es4x-utils/src/utils/UrlUtils';
 import { QueryUtils } from 'es4x-utils/src/network/QueryUtils';
 import { ArrayUtils } from 'es4x-utils/src/utils/ArrayUtils';
 import { CoreUtils } from 'es4x-utils/src/utils/CoreUtils';
+import { CacheManager } from 'es4x-cache/src/CacheManager';
 
 import { PGDBMgr } from 'es4x-sdk-pgsql/src/PGDBMgr';
 import { GoogleAPI } from 'es4x-sdk-gcp/src/GoogleAPI';
@@ -17,6 +18,11 @@ import { GoogleAPI } from 'es4x-sdk-gcp/src/GoogleAPI';
 class	AbstractServiceContext
 {
 	static	get	TRANSFORM_IDS_TO_OBJECTS()		{	return "ids_to_objects";	}
+
+	static	get	ENV_PRODUCTION()				{	return "production"; }
+	static	get	ENV_STAGING()					{	return "staging"; }
+	static	get	ENV_DEVELOPMENT()				{	return "development"; }
+	static	get	ENV_LOCAL()						{	return "local"; }
 
 	static	get	SOURCE_METHOD()					{	return "method"; }
 	static	get	SOURCE_FILTERS()				{	return "filters"; }
@@ -27,15 +33,17 @@ class	AbstractServiceContext
 	static	get	CACHE_EXPIRATION_BATCH()		{	return 500;	}
 	static	get	CACHE_ACTION_DELETE()			{	return "delete";	}
 
-	constructor(_vertx, _env, _config, _isAdmin = false)
+	constructor(_vertx, _env, _isAdmin = false)
 	{
 		this.__vertx = _vertx;
 		this.__env = _env;
-		this.__serviceHosts = this.getServicesHostConfig(_env);
 		this.__isAdmin = _isAdmin;
 
-		// save the config
-		this.__config = _config;
+		// load all the services
+		this.__serviceHosts = this.getServicesHostConfig(_env);
+
+		// config
+		this.__config = null;
 
 		// init the web, db and others to null
 		this.__webClient = null;
@@ -47,6 +55,70 @@ class	AbstractServiceContext
 
 		// main service
 		this.__mainService = null;
+	}
+
+	getIsLocal()
+	{
+		return this.__env == AbstractServiceContext.ENV_LOCAL;
+	}
+
+	static	VerifyEnv(_env)
+	{
+		// empty?
+		if (StringUtils.IsEmpty(_env) == true)
+			return AbstractServiceContext.ENV_LOCAL;
+
+		// to lower case
+		_env = _env.toLowerCase();
+
+		// PRODUCTION?
+		if (["prod", "production"].includes(_env) == true)
+			return AbstractServiceContext.ENV_PRODUCTION;
+
+		// STAGING?
+		if (["staging"].includes(_env) == true)
+			return AbstractServiceContext.ENV_STAGING;
+
+		// DEV?
+		if (["dev", "development"].includes(_env) == true)
+			return AbstractServiceContext.ENV_DEVELOPMENT;
+
+		// local
+		return AbstractServiceContext.ENV_LOCAL;
+	}
+
+	async	init(_service, _config)
+	{
+		// save the service
+		this.__mainService = _service;
+
+		// save the config
+		this.__config = _config;
+
+		// start the cache?
+		let	useCache = this.getConfigToBool("cache.activated");
+		if (useCache == true)
+		{
+			// get the host url
+			let	cacheUrl = this.getConfigToString("cache.url");
+
+			// try to create it
+			this.__cacheMgr = await CacheManager.Create(this.__vertx, cacheUrl);
+			if (this.__cacheMgr == null)
+			{
+				LogUtils.LogError("Error: couldn't launch the cache at: " + cacheUrl);				
+			}
+		}
+
+		return true;
+	}
+
+	isMainServiceEqual(_code)
+	{
+		if (this.__mainService != null)
+			return this.__mainService.getServiceCode() == _code;
+		else
+			return false;
 	}
 
 	getServicesHostConfig(_env)
@@ -107,16 +179,6 @@ class	AbstractServiceContext
 		return this.__isAdmin;
 	}
 
-	setMainService(_service)
-	{
-		this.__mainService = _service;
-	}
-
-	setCacheManager(_cacheMgr)
-	{
-		this.__cacheMgr = _cacheMgr;
-	}
-
 	getCache()
 	{
 		return this.__cacheMgr;
@@ -170,9 +232,15 @@ class	AbstractServiceContext
 
 	getGoogleApi()
 	{
+		// lazy loading
 		if (this.__googleApi == null)
 		{
-			this.__googleApi = new GoogleAPI(this.__vertx, this.__env);
+			// get the region and key
+			let	region = this.getConfigToString("gcp.region");
+			let	key = this.getConfig("gcp.key");
+
+			// create it
+			this.__googleApi = new GoogleAPI(this.__vertx, region, key, this.getIsLocal());
 		}
 
 		return this.__googleApi;
@@ -256,14 +324,24 @@ class	AbstractServiceContext
 		return ObjUtils.GetValue(this.__config, _key, _default);
 	}
 
-	getPGDBMgr(_connectionKey)
+	getConfigToString(_key, _default = "")
+	{
+		return ObjUtils.GetValueToString(this.__config, _key, _default);
+	}
+
+	getConfigToBool(_key, _default = false)
+	{
+		return ObjUtils.GetValueToBool(this.__config, _key, _default);
+	}
+
+	getPGDBMgr(_connectionKey = "default")
 	{
 		// do we already have it?
 		if (this.__db.hasOwnProperty(_connectionKey) == false)
 		{
 			// get the config for it
 			let	newDB = null;
-			let	connectionConfig = this.getConfig(_connectionKey);
+			let	connectionConfig = this.getConfig("databases." + _connectionKey);
 			if (connectionConfig == null)
 				LogUtils.LogError("No DB Configuration found for: '" + _connectionKey + "'!");
 			else
@@ -1120,14 +1198,6 @@ class	AbstractServiceContext
 		{
 			return await this.transformItemsCustom(_items, _type, _filters, _queryFilters, _queryData, _authUserId, _beforePopulate);
 		}
-	}
-
-	isMainServiceEqual(_code)
-	{
-		if (this.__mainService != null)
-			return this.__mainService.getServiceCode() == _code;
-		else
-			return false;
 	}
 
 	async	getItemInfoBatch(_ids, _type, _authUserId = 0)

@@ -21,35 +21,53 @@ class	AbstractModel
 	static	get	DATASOURCE_PGSQL()			{	return "pgsql";	}
 	static	get	DATASOURCE_FIRESTORE()		{	return "firestore";	}
 
-	constructor(_service)
+	constructor(_service, _config)
 	{
+		// save the service
 		this.__service = _service;
-		this.__table = this.isFirestore() ? "" : this.getMainTable();
+
+		// load from the configuration
+		this.__code = ObjUtils.GetValueToString(_config, "model");
+		this.__datasource = ObjUtils.GetValueToString(_config, "datasource");
+		this.__table = ObjUtils.GetValueToString(_config, "table");
+		this.__firestorePath = ObjUtils.GetValueToString(_config, "firestore_path");
+		this.__canUpdate = ObjUtils.GetValueToBool(_config, "can_update");
+		this.__canDelete = ObjUtils.GetValueToBool(_config, "can_delete");
+	}
+
+	isValid()
+	{
+		return StringUtils.IsEmpty(this.__code) == false;
 	}
 
 	getModelCode()
 	{
-		throw new Error("Abstract Method has no implementation");
+		return this.__code;
 	}
 
 	getMainTable()
 	{
-		throw new Error("Abstract Method has no implementation");
+		return this.__table;
 	}	
 
 	getFirestorePath(_filters)
 	{
-		throw new Error("Abstract Method has no implementation");
+		return this.__firestorePath;
+	}
+
+	getDataSource()
+	{
+		return this.__datasource;
 	}
 
 	async	canUpdate(_filters, _data)
 	{
-		throw new Error("Abstract Method has no implementation");
+		return this.__canUpdate;
 	}
 
 	async	canDelete(_filters)
 	{
-		throw new Error("Abstract Method has no implementation");
+		return this.__canDelete;
 	}
 
 	async	prepareDataForCreate(_filters, _data)
@@ -59,7 +77,7 @@ class	AbstractModel
 
 	async	list(_filters)
 	{
-		throw new Error("Abstract Method has no implementation");
+		return [];
 	}	
 
 	async	listBatch(_filters, _data)
@@ -75,11 +93,6 @@ class	AbstractModel
 	getService()
 	{
 		return this.__service;
-	}
-
-	getDataSource()
-	{
-		return AbstractModel.DATASOURCE_PGSQL;
 	}
 
 	isFirestore()
@@ -625,9 +638,6 @@ class	AbstractModel
 
 		return conditions;
 	}
-
-
-
 
 	field(_field, _alias="", _function="")
 	{
