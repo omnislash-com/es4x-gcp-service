@@ -117,37 +117,47 @@ class	AbstractServiceContext
 		this.__cacheMgr = _cacheMgr;
 	}
 
+	getCache()
+	{
+		return this.__cacheMgr;
+	}
+
+	hasCache()
+	{
+		return this.__cacheMgr != null;
+	}
+
 	async	cache_del(_category, _key)
 	{
-		if (this.__cacheMgr == null)
+		if (this.hasCache() == false)
 			return false;
-		return await this.__cacheMgr.del(_category, _key);
+		return await this.getCache().del(_category, _key);
 	}
 
 	async	cache_set(_category, _key, _val, _expirationSec = 0)
 	{
-		if (this.__cacheMgr == null)
+		if (this.hasCache() == false)
 			return false;
-		return await this.__cacheMgr.set(_category, _key, _val, _expirationSec);
+		return await this.getCache().set(_category, _key, _val, _expirationSec);
 	}
 
 	async	cache_get(_category, _key, _default = null)
 	{
-		if (this.__cacheMgr == null)
+		if (this.hasCache() == false)
 			return _default;
-		return await this.__cacheMgr.get(_category, _key, _default);
+		return await this.getCache().get(_category, _key, _default);
 	}
 
 	async	cache_setMulti(_category, _keyValues, _expirationSec = 0)
 	{
-		if (this.__cacheMgr == null)
+		if (this.hasCache() == false)
 			return false;
-		return await this.__cacheMgr.setMulti(_category, _keyValues, _expirationSec);
+		return await this.getCache().setMulti(_category, _keyValues, _expirationSec);
 	}
 
 	async	cache_getMulti(_category, _keys)
 	{
-		if (this.__cacheMgr == null)
+		if (this.hasCache() == false)
 		{
 			return {
 				"found": {},
@@ -155,7 +165,7 @@ class	AbstractServiceContext
 			};
 		}
 
-		return await this.__cacheMgr.getMulti(_category, _keys);
+		return await this.getCache().getMulti(_category, _keys);
 	}
 
 	getGoogleApi()
