@@ -97,7 +97,6 @@ class	AbstractModel
 		return this.getService().getContext();
 	}
 
-
 	getGoogleApi()
 	{
 		return this.getService().getGoogleApi();
