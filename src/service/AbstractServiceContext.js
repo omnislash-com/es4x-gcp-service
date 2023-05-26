@@ -1,99 +1,37 @@
 import { WebClientOptions } from '@vertx/web-client/options';
 import { WebClient } from '@vertx/web-client';
-import { ObjUtils } from '../utils/ObjUtils';
-import { PGDBMgr } from '../db/PGDBMgr';
-import { QueryUtils } from './QueryUtils';
-import { GoogleAPI } from '../google/GoogleAPI';
-import { StringUtils } from '../utils/StringUtils';
-import { ReportBuilderPostProcessor } from '../reportbuilder/ReportBuilderPostProcessor';
 import { MultiMap } from '@vertx/core';
 import { Buffer } from '@vertx/core';
-import { UrlUtils } from '../utils/UrlUtils';
+
+import { LogUtils } from 'es4x-utils/src/utils/LogUtils';
+import { ObjUtils } from 'es4x-utils/src/utils/ObjUtils';
+import { StringUtils } from 'es4x-utils/src/utils/StringUtils';
+import { UrlUtils } from 'es4x-utils/src/utils/UrlUtils';
+import { QueryUtils } from 'es4x-utils/src/network/QueryUtils';
+import { ArrayUtils } from 'es4x-utils/src/utils/ArrayUtils';
+import { CoreUtils } from 'es4x-utils/src/utils/CoreUtils';
+
+import { PGDBMgr } from 'es4x-sdk-pgsql/src/PGDBMgr';
+import { GoogleAPI } from 'es4x-sdk-gcp/src/GoogleAPI';
 
 class	AbstractServiceContext
 {
-	static	get	DB_OMNISLASH_USERS_OLD()		{	return "db_omni_users_old"; }
-
-	static	get	SERVICE_REPORT_BUILDER()		{	return "report-builder"; }
-	static	get	SERVICE_PLAYER_VAULT()			{	return "player-vault"; }
-	static	get	SERVICE_PLAYER_SESSION()		{	return "player-session"; }
-	static	get	SERVICE_PLAYER_STATUS()			{	return "player-status"; }
-	static	get	SERVICE_PLAYER_STATS()			{	return "player-stats"; }
-	static	get	SERVICE_PLAYER_ENCOUNTERS()		{	return "player-encounters"; }
-	static	get	SERVICE_USERS()					{	return "users"; }
-	static	get	SERVICE_POSTS()					{	return "posts"; }
-	static	get	SERVICE_GAME_INFO()				{	return "game-info"; }
-	static	get	SERVICE_NOTIFICATION_LISTENER()	{	return "notification-listener"; }
-	static	get	SERVICE_NOTIFICATION_SENDER()	{	return "notification-sender"; }
-	static	get	SERVICE_API_ADMIN()				{	return "api-admin"; }
-	static	get	SERVICE_API_COMMON()			{	return "api-common"; }
-	static	get	SERVICE_API_GAMEINFO()			{	return "api-gameinfo"; }
-	static	get	SERVICE_URL_META()				{	return "url-meta"; }
-	static	get	SERVICE_HEALTH_DATA()			{	return "health-data"; }
-	static	get	SERVICE_WALLET()		        {	return "wallet"; }
-	static	get	SERVICE_MAINTENANCE()			{	return "maintenance"; }
-	static	get	SERVICE_OAUTH()	      			{	return "oauth"; }
-	static	get	SERVICE_GAMEDATA()	  			{	return "gamedata"; }
-	static	get	SERVICE_GAME_FORTNITE()	  		{	return "game-fortnite"; }
-	static	get	SERVICE_GAME_RIOT()		  		{	return "game-riot"; }
-	static	get	SERVICE_GAME_CHESS()			{	return "game-chess"; }
-	static	get	SERVICE_GAME_VALVE()			{	return "game-valve"; }
-	static	get	SERVICE_GAME_NEWS()				{	return "game-news"; }
-	static	get	SERVICE_COMPANION_APP()	  		{	return "companion-app"; }
-	static	get	SERVICE_TASK_PROCESSOR()	  	{	return "task-processor"; }
-	static	get	SERVICE_ANALYTICS()			  	{	return "analytics"; }
-	static	get	SERVICE_MODERATION()		  	{	return "moderation"; }
-	static	get	SERVICE_DATA_AGGREGATOR()	 	{	return "data-aggregator"; }
-	static	get	SERVICE_MEDIA_ENGAGEMENT()	 	{	return "media-engagement"; }
-	static	get	SERVICE_VIDEO_GENERATOR()	 	{	return "video-generator"; }
-
-	static	get	BATCH_TYPE_USERS()				{	return "users"; }
-	static	get	BATCH_TYPE_USERS_BY_USERNAME()	{	return "users_by_username"; }
-	static	get	BATCH_TYPE_MATCHES()			{	return "matches"; }
-	static	get	BATCH_TYPE_POSTS()				{	return "posts"; }
-	static	get	BATCH_TYPE_COMMENTS()			{	return "comments"; }
-	static	get	BATCH_TYPE_STORIES()			{	return "stories"; }
-	static	get	BATCH_TYPE_IS_FOLLOWING()		{	return "is_following"; }
-	static	get	BATCH_TYPE_URL_META()			{	return "url_meta"; }
-	static	get	BATCH_TYPE_MEDIA_FILES()		{	return "media_files"; }
-	static	get	BATCH_TYPE_GAME_PLAYERS()		{	return "game_players"; }
-	static	get	BATCH_TYPE_MEDIA_ENGAGEMENT()	{	return "media_engagement"; }
-	static	get	BATCH_TYPE_MEDIA_COMMENTS()		{	return "media_comments"; }
-	static	get	BATCH_TYPE_ORGANIZATION()		{	return "organization"; }
-
 	static	get	TRANSFORM_IDS_TO_OBJECTS()		{	return "ids_to_objects";	}
-	static	get	TRANSFORM_POSTPROCESS_REPORT()	{	return "postprocess_report";	}
-	static	get	TRANSFORM_POSTPROCESS_OAUTH()	{	return "postprocess_oauth";	}
-	static	get	TRANSFORM_POSTPROCESS_NEW_ORG()	{	return "postprocess_new_org";	}
-	static	get	TRANSFORM_POSTPROCESS_NEW_GAME()	{	return "postprocess_new_game";	}
 
 	static	get	SOURCE_METHOD()					{	return "method"; }
 	static	get	SOURCE_FILTERS()				{	return "filters"; }
 	static	get	SOURCE_BODY()					{	return "body"; }
 
-	static	get	SOURCE_TYPE_USER_FOLLOWING()		{	return "user_following"; }
-	static	get	SOURCE_TYPE_AUTH_USER_ID()			{	return "auth_user_id";	}
-	static	get	SOURCE_TYPE_USER_ID_FROM_USERNAME()	{	return "user_id_from_username";	}
-	static	get	SOURCE_TYPE_USER_GAME_PLAYERS()		{	return "user_game_players"; }
-	static	get	SOURCE_TYPE_GAMEINFO_AUTH_ORG()		{	return "gameinfo_auth_org"; }
+	static	get	SOURCE_TYPE_AUTH_USER_ID()		{	return "auth_user_id";	}
 
-	static	get	CACHE_EXPIRATION_BATCH()				{	return 500;	}
-	static	get	CACHE_EXPIRATION_USER_ID_BY_USERNAME()	{	return 500;	}
-	static	get	CACHE_CATEGORY_USER_ID_BY_USERNAME()	{	return "user_id_by_username";	}
-	static	get	CACHE_EXPIRATION_USER_FOLLOWING()		{	return 500;	}
-	static	get	CACHE_CATEGORY_USER_FOLLOWING()			{	return "user_following";	}
-	static	get	CACHE_CATEGORY_USER_GAME_PLAYERS()		{	return "user_game_players";	}
-	static	get	CACHE_EXPIRATION_USER_GAME_PLAYERS()	{	return 500;	}
-
-	static	get	ADMIN_KEY_SECRET()						{	return "Omn29378LLp---";	}
-
+	static	get	CACHE_EXPIRATION_BATCH()		{	return 500;	}
 	static	get	CACHE_ACTION_DELETE()			{	return "delete";	}
 
 	constructor(_vertx, _env, _config, _isAdmin = false)
 	{
 		this.__vertx = _vertx;
 		this.__env = _env;
-		this.__serviceHosts = AppContext.GetServicesHostConfig(_env);
+		this.__serviceHosts = this.getServicesHostConfig(_env);
 		this.__isAdmin = _isAdmin;
 
 		// save the config
@@ -109,6 +47,59 @@ class	AbstractServiceContext
 
 		// main service
 		this.__mainService = null;
+	}
+
+	getServicesHostConfig(_env)
+	{
+		throw new Error("Abstract Method has no implementation");
+	}		
+
+	getNotificationSenderService()
+	{
+		// override this method and return the name of the service that sends notifications
+		return "";
+	}
+
+	getNotificationSenderPath()
+	{
+		// override and return the path of the service that sends notifications
+		return "";
+	}
+
+	getTaskProcessorService()
+	{
+		// override this method and return the name of the service that processes tasks
+		return "";
+	}
+
+	getTaskProcessorPath()
+	{
+		// override and return the path of the service that processes tasks
+		return "";
+	}
+
+	getAdminKeySecret()
+	{
+		// override and return a string to encode the admin keys
+		return "12345";
+	}
+
+	getBatchTypeWithoutCache()
+	{
+		// override this method to return a list of batch items for which you don't want to use the cache for
+		return [];
+	}
+
+	async	getItemInfoBatchCustom(_ids, _type, _authUserId = 0)
+	{
+		// override this method to load a batch of objects information
+		return {};
+	}
+
+	async	getValueFromSourceInternal(_source, _filters, _authUserId, _parameter, _userId)
+	{
+		// override this method to get a specific value from the source
+		return null;
 	}
 
 	isAdmin()
@@ -179,34 +170,60 @@ class	AbstractServiceContext
 
 	async	sendNotification(_payload, _delaySec = 0)
 	{
-		return await this.createGoogleTask(AppContext.SERVICE_NOTIFICATION_SENDER, "/send", _payload, _delaySec);
+		// get the service and path
+		let	service = this.getNotificationSenderService();
+		let	path = this.getNotificationSenderPath();
+
+		// if we have it, we can do it!
+		if ( (StringUtils.IsEmpty(service) == false) && (StringUtils.IsEmpty(path) == false) )
+		{
+			return await this.createGoogleTask(service, path, _payload, _delaySec);
+		}
+		else
+		{
+			LogUtils.LogError("Error: no notification sender service has been configured!");
+			return 500;
+		}
 	}
 
 	async	createTaskProcess(_service, _model, _action, _filters = {}, _data = {}, _callbackInfo = null, _delaySec = 0, _priority = 1)
 	{
-		// prepare the payload
-		let	payload = {
-			"service": _service,
-			"model": _model,
-			"action": _action,
-			"task_filters": _filters,
-			"task_data": _data,
-			"task_callback": _callbackInfo,
-			"priority": _priority,
-			"delay": _delaySec
-		};
+		// get the service and path
+		let	service = this.getTaskProcessorService();
+		let	path = this.getTaskProcessorPath();
 
-		// create the task
-		let	ret = await this.postFromServiceToJson(AppContext.SERVICE_TASK_PROCESSOR, "/tasks", payload);
-
-		if (ret == null)
+		// if we have it, we can do it!
+		if ( (StringUtils.IsEmpty(service) == false) && (StringUtils.IsEmpty(path) == false) )
 		{
-			ObjUtils.LogError("Error creating the task", payload);
-			return 500;
+			// prepare the payload
+			let	payload = {
+				"service": _service,
+				"model": _model,
+				"action": _action,
+				"task_filters": _filters,
+				"task_data": _data,
+				"task_callback": _callbackInfo,
+				"priority": _priority,
+				"delay": _delaySec
+			};
+
+			// create the task
+			let	ret = await this.postFromServiceToJson(service, path, payload);
+
+			if (ret == null)
+			{
+				LogUtils.LogError("Error creating the task", payload);
+				return 500;
+			}
+			else
+			{
+				return 200;
+			}
 		}
 		else
 		{
-			return 200;
+			LogUtils.LogError("Error: no task processor service has been configured!");
+			return 500;
 		}
 	}
 
@@ -215,7 +232,7 @@ class	AbstractServiceContext
 		let	queue = StringUtils.IsEmpty(_queue) ? _service : _queue;
 		let	host = this.getHost(_service);
 		if (StringUtils.IsEmpty(host) == true)
-			return null;
+			return 500;
 			
 		let url = "https://" + host + _path;
 		let	method = "POST";
@@ -229,11 +246,6 @@ class	AbstractServiceContext
 		return ObjUtils.GetValue(this.__config, _key, _default);
 	}
 
-	getPGDGMgrToOld()
-	{
-		return this.getPGDBMgr(AppContext.DB_OMNISLASH_USERS_OLD);
-	}
-
 	getPGDBMgr(_connectionKey)
 	{
 		// do we already have it?
@@ -243,11 +255,11 @@ class	AbstractServiceContext
 			let	newDB = null;
 			let	connectionConfig = this.getConfig(_connectionKey);
 			if (connectionConfig == null)
-				ObjUtils.LogError("No DB Configuration found for: '" + _connectionKey + "'!");
+				LogUtils.LogError("No DB Configuration found for: '" + _connectionKey + "'!");
 			else
 			{
 				// create the new connection
-				newDB = PGDBMgr.create(this.__vertx, connectionConfig.host, connectionConfig.user, connectionConfig.password, connectionConfig.name, connectionConfig.port);
+				newDB = PGDBMgr.Create(this.__vertx, connectionConfig.host, connectionConfig.user, connectionConfig.password, connectionConfig.name, connectionConfig.port);
 			}
 
 			// save it
@@ -300,7 +312,7 @@ class	AbstractServiceContext
 
 	encodeAdminKey(_key)
 	{
-		let	keyToEncode = _key + AppContext.ADMIN_KEY_SECRET;
+		let	keyToEncode = _key + this.getAdminKeySecret();
 		return StringUtils.SHA256(keyToEncode);
 	}
 
@@ -334,7 +346,7 @@ class	AbstractServiceContext
 			let	preProcessBodyParams = await this.preProcessBodyParameters(preProcessBodyInstructions, filters, _authUserId);
 			bodyParams = ObjUtils.Merge(bodyParams, preProcessBodyParams);
 
-			ObjUtils.Log("FORWARD QUERY:", {
+			LogUtils.Log("FORWARD QUERY:", {
 				"uri": uri,
 				"method": method,
 				"params": bodyParams,
@@ -365,7 +377,7 @@ class	AbstractServiceContext
 		}
 		catch(e)
 		{
-			ObjUtils.LogException(e);
+			LogUtils.LogException(e);
 			query.responseException(e);
 		}		
 	}
@@ -373,7 +385,7 @@ class	AbstractServiceContext
 	async	cachePostProcessing(_cachePostProcessingActions, _filters, _body, _jsonData, _authUserId)
 	{
 		// empty list of actions?
-		if (ObjUtils.IsArrayEmpty(_cachePostProcessingActions) == true)
+		if (ArrayUtils.IsEmpty(_cachePostProcessingActions) == true)
 			return;
 
 		// process each action
@@ -398,7 +410,7 @@ class	AbstractServiceContext
 
 		// depending on the action
 		// - DELETE
-		if (realAction == AppContext.CACHE_ACTION_DELETE)
+		if (realAction == AbstractServiceContext.CACHE_ACTION_DELETE)
 		{
 			await this.cache_del(cacheCategory, cacheKey);
 		}
@@ -410,7 +422,7 @@ class	AbstractServiceContext
 		let	source = ObjUtils.GetValue(_sourceInfo, "source", "");
 
 		// from a method?
-		if (source == AppContext.SOURCE_METHOD)
+		if (source == AbstractServiceContext.SOURCE_METHOD)
 		{
 			let	method = ObjUtils.GetValue(_sourceInfo, "source_method", "");
 			let	parameter = ObjUtils.GetValue(_sourceInfo, "parameter", "");
@@ -419,14 +431,14 @@ class	AbstractServiceContext
 			return this.getValueFromSource(method, _filters, _authUserId, parameter, userIdLocation);
 		}
 		// from filters?
-		else if (source == AppContext.SOURCE_FILTERS)
+		else if (source == AbstractServiceContext.SOURCE_FILTERS)
 		{
 			let	parameter = ObjUtils.GetValue(_sourceInfo, "parameter", "");
 			
 			return ObjUtils.GetValue(_filters, parameter);
 		}
 		// from body?
-		else if (source == AppContext.SOURCE_BODY)
+		else if (source == AbstractServiceContext.SOURCE_BODY)
 		{
 			let	parameter = ObjUtils.GetValue(_sourceInfo, "parameter", "");
 			
@@ -531,13 +543,6 @@ class	AbstractServiceContext
 			return await this.queryHost(_method, host, _uri, _queryParams, _port);
 	}
 
-
-
-	/**
-	 * @param {string} _service: Service to query
-	 * @param {string} _path: Path of the service
-	 * @param {object} _fields: Object query params to pass
-	 */
 	async	getFromServiceToJson(_service, _path, _queryParams = {}, _port=443)
 	{
 		// get the host for that service
@@ -548,17 +553,8 @@ class	AbstractServiceContext
 			return await this.getFromHostToJson(host, _path, _queryParams, _port);
 	}
 
-	
-
-
- 
-	 /**
-	  * @param {string} _host: Host to query
-	  * @param {string} _path: Path of the service
-	  * @param {object} _fields: Object query params to pass
-	  */
-	 async	getFromHostToJson(_host, _path, _queryParams = {}, _port=443, _headers={})
-	 {
+	async	getFromHostToJson(_host, _path, _queryParams = {}, _port=443, _headers={})
+	{
 		// add the query params to the path
 		let	fullPath = _path;
 		let	params = ObjUtils.Join(_queryParams, "=", "&");
@@ -579,13 +575,13 @@ class	AbstractServiceContext
 			let	webClient = this.getWebClient();
 			if (webClient == null)
 			{
-				ObjUtils.LogError("Webclient is null!");
+				LogUtils.LogError("Webclient is null!");
 				return null;
 			}
 
 			// do the query
 			let	result = null;
-			ObjUtils.Log("Query " + _method + " > https://" + _host + _uri);
+			LogUtils.Log("Query " + _method + " > https://" + _host + _uri);
 			// - GET
 			if (_method == QueryUtils.HTTP_METHOD_GET)
 			{
@@ -617,7 +613,7 @@ class	AbstractServiceContext
 		}
 		catch(e)
 		{
-			ObjUtils.LogException(e);
+			LogUtils.LogException(e);
 			return null;
 		}			
 	}
@@ -631,11 +627,11 @@ class	AbstractServiceContext
 			let	webClient = this.getWebClient();
 			if (webClient == null)
 			{
-				ObjUtils.LogError("Webclient is null!");
+				LogUtils.LogError("Webclient is null!");
 				return null;
 			}
 
-			ObjUtils.Log("Query to: https://" + _host + _uri);
+			LogUtils.Log("Query to: https://" + _host + _uri);
 			let	query = webClient.get(_port, _host, _uri);
 
 			// add the headers
@@ -654,7 +650,7 @@ class	AbstractServiceContext
 		}
 		catch(e)
 		{
-			ObjUtils.LogException(e);
+			LogUtils.LogException(e);
 			return null;
 		}	
 	}
@@ -668,11 +664,11 @@ class	AbstractServiceContext
 			let	webClient = this.getWebClient();
 			if (webClient == null)
 			{
-				ObjUtils.LogError("Webclient is null!");
+				LogUtils.LogError("Webclient is null!");
 				return null;
 			}
 
-			ObjUtils.Log("Query DELETE to: https://" + _host + _uri);
+			LogUtils.Log("Query DELETE to: https://" + _host + _uri);
 			let	query = webClient.delete(_port, _host, _uri);
 
 			// add the headers
@@ -702,7 +698,7 @@ class	AbstractServiceContext
 		}
 		catch(e)
 		{
-			ObjUtils.LogException(e);
+			LogUtils.LogException(e);
 			return null;
 		}	
 	}	
@@ -716,27 +712,22 @@ class	AbstractServiceContext
 			let	webClient = this.getWebClient();
 			if (webClient == null)
 			{
-				ObjUtils.LogError("Webclient is null!");
+				LogUtils.LogError("Webclient is null!");
 				return null;
 			}
 
-			ObjUtils.Log("Query to: " + _uri);
+			LogUtils.Log("Query to: " + _uri);
 			let	result = await webClient.getAbs(_uri).send();
 
 			return result;
 		}
 		catch(e)
 		{
-			ObjUtils.LogException(e);
+			LogUtils.LogException(e);
 			return null;
 		}	
 	}	
 
-	 /**
-	  * @param {string} _host: Host to query
-	  * @param {string} _path: Path of the service
-	  * @param {object} _fields: Object query params to pass
-	  */
 	async	getFromHostAndURIToJson(_host, _uri, _port=443, _headers={})
 	{	
 		// make sure we dont have spaces in the url
@@ -745,49 +736,38 @@ class	AbstractServiceContext
 		// execute the query
 		let	fullUrl = "https://" + _host + _uri;
 
-		ObjUtils.Log("GET Query to: " + fullUrl);
+		LogUtils.Log("GET Query to: " + fullUrl);
 		let	result = await this.getFromHostAndURI(_host, _uri, _port, _headers);
 
 		// return the result
 		return this.queryResultToJson(result, fullUrl, {}, _headers);
 	}
  
-	/**
-	 * @param {string} _service: Service to query
-	 * @param {string} _path: Path of the service
-	 * @param {object} _fields: Object query params to pass
-	 */
-	 async	postFromServiceToJson(_service, _path, _queryParams = {}, _port=443)
-	 {
-		 // get the host for that service
-		 let	host = this.getHost(_service);
-		 if (host == "")
-			 return null;
-		 else
-			 return await this.postFromHostToJson(host, _path, _queryParams, _port);
-	 }
- 
- 
-	 /**
-	  * @param {string} _host: Host to query
-	  * @param {string} _path: Path of the service
-	  * @param {object} _fields: Object query params to pass
-	  */
-	 async	postFromHostToJson(_host, _path, _queryParams = {}, _port=443, _basicUsername = "", _basicPassword = "")
-	 {
-		 // get the web client
-		 let	webClient = this.getWebClient();
-		 if (webClient == null)
-		 {
-			ObjUtils.LogError("Webclient is null!");
+	async	postFromServiceToJson(_service, _path, _queryParams = {}, _port=443)
+	{
+		// get the host for that service
+		let	host = this.getHost(_service);
+		if (host == "")
 			return null;
-		 }
-		 
+		else
+			return await this.postFromHostToJson(host, _path, _queryParams, _port);
+	}
+ 
+	async	postFromHostToJson(_host, _path, _queryParams = {}, _port=443, _basicUsername = "", _basicPassword = "")
+	{
+		// get the web client
+		let	webClient = this.getWebClient();
+		if (webClient == null)
+		{
+			LogUtils.LogError("Webclient is null!");
+			return null;
+		}
+		
 		 // execute the query
 		try
 		{
 			let	fullUrl = "https://" + _host + _path;
-			ObjUtils.Log("POST Query to: " + fullUrl, {params: _queryParams, auth: {username: _basicUsername, pass: _basicPassword}});
+			LogUtils.Log("POST Query to: " + fullUrl, {params: _queryParams, auth: {username: _basicUsername, pass: _basicPassword}});
 
 			// build the request
 			let	request = webClient.post(_port, _host, _path);
@@ -805,7 +785,7 @@ class	AbstractServiceContext
 		}
 		catch(e)
 		{
-			ObjUtils.LogException(e);
+			LogUtils.LogException(e);
 			return null;
 		}	 
 	}
@@ -840,7 +820,7 @@ class	AbstractServiceContext
 				}
 				catch
 				{
-					ObjUtils.LogError("HTTP error parsing the JSON: " + statusCode + ", msg=" + _result.statusMessage(), {
+					LogUtils.LogError("HTTP error parsing the JSON: " + statusCode + ", msg=" + _result.statusMessage(), {
 						"url": _fullUrl,
 						"params": _queryParams,
 						"result": _result.bodyAsString()
@@ -850,7 +830,7 @@ class	AbstractServiceContext
 			}
 			else
 			{
-				ObjUtils.LogError("HTTP error: " + statusCode + ", msg=" + _result.statusMessage(), {
+				LogUtils.LogError("HTTP error: " + statusCode + ", msg=" + _result.statusMessage(), {
 					"url": _fullUrl,
 					"params": _queryParams,
 					"result": _result.bodyAsString()
@@ -860,7 +840,7 @@ class	AbstractServiceContext
 		}
 		else
 		{
-			ObjUtils.LogError("HTTP error: getting the data", {
+			LogUtils.LogError("HTTP error: getting the data", {
 				"url": _fullUrl,
 				"params": _queryParams
 			});
@@ -889,7 +869,7 @@ class	AbstractServiceContext
 		let	webClient = this.getWebClient();
 		if (webClient == null)
 		{
-			ObjUtils.LogError("Webclient is null!");
+			LogUtils.LogError("Webclient is null!");
 			return null;
 		}
 		
@@ -903,7 +883,7 @@ class	AbstractServiceContext
 
 			// build the full url
 			let fullUrl =  "https://" + _host + _path;
-			ObjUtils.Log("POST Query to: " + fullUrl);
+			LogUtils.Log("POST Query to: " + fullUrl);
 			let	query = webClient.post(_port, _host, _path);
 
 			// add the headers
@@ -923,7 +903,7 @@ class	AbstractServiceContext
 		}
 		catch(e)
 		{
-			ObjUtils.LogException(e);
+			LogUtils.LogException(e);
 			return null;
 		}	 
    }
@@ -934,7 +914,7 @@ class	AbstractServiceContext
 		let	webClient = this.getWebClient();
 		if (webClient == null)
 		{
-			ObjUtils.LogError("Webclient is null!");
+			LogUtils.LogError("Webclient is null!");
 			return null;
 		}
 		
@@ -961,29 +941,25 @@ class	AbstractServiceContext
 		}
 		catch(e)
 		{
-			ObjUtils.LogException(e);
+			LogUtils.LogException(e);
 			return null;
 		}	 
-  }	
+	}
 
-
-	 /**
-	  * @param {string} _service: Service to get the host from
-	  */
-	 getHost(_service)
-	 {
+	getHost(_service)
+	{
 		// do we have it?
 		if (this.__serviceHosts.hasOwnProperty(_service) == true)
 			return this.__serviceHosts[_service];
 		else
 		{
-			ObjUtils.LogError("Can't find host for '" + _service + "'!");
+			LogUtils.LogError("Can't find host for '" + _service + "'!");
 			return "";
 		}
-	 }
- 
-	 getWebClient()
-	 {
+	}
+
+	getWebClient()
+	{
 		// lazy load the web client only when we need it
 		if (this.__webClient == null)
 		{
@@ -996,7 +972,7 @@ class	AbstractServiceContext
 
 		// return it
 		return this.__webClient;
-	 }
+	}
 
 	async	populateItemsFromInstructions(_items, _instructions, _authUserId = 0)
 	{
@@ -1019,7 +995,7 @@ class	AbstractServiceContext
 		let	ids = ObjUtils.GetValueRecursive(objToLookInto, _fieldId, _depthMax);
 		if (ids.length > 0)
 		{
-			ObjUtils.Log("populating for type '" + _type + " with " + ids.length + " ids");
+			LogUtils.Log("populating for type '" + _type + " with " + ids.length + " ids");
 			// send the batch request
 			let	infoDict = await this.getItemInfoBatch(ids, _type, _authUserId);
 
@@ -1044,10 +1020,16 @@ class	AbstractServiceContext
 		return _items;
 	}	
 
+	async	transformItemsCustom(_items, _type, _filters, _queryFilters, _queryData, _authUserId = 0, _beforePopulate = true)
+	{
+		// override this method to handle specific transformations
+		return _items;
+	}
+
 	async	transformItems(_items, _type, _filters, _queryFilters, _queryData, _authUserId = 0, _beforePopulate = true)
 	{
 		// IDS TO OBJECTS?
-		if ( (_type == AppContext.TRANSFORM_IDS_TO_OBJECTS) && (_beforePopulate == true) )
+		if ( (_type == AbstractServiceContext.TRANSFORM_IDS_TO_OBJECTS) && (_beforePopulate == true) )
 		{
 			// is the list of ids in a field?
 			let	fieldsToDo = ObjUtils.GetValue(_filters, "fields", []);
@@ -1065,10 +1047,10 @@ class	AbstractServiceContext
 			}
 
 			// convert the ids to objects
-			let	itemsIsArray = ObjUtils.IsArray(_items) && (fieldsToDo.length > 0);
+			let	itemsIsArray = CoreUtils.IsArray(_items) && (fieldsToDo.length > 0);
 			let	convertedObjects = [];
 			let	keepAssoc = ObjUtils.GetValueToBool(_filters, "keep_assoc");
-			if (ObjUtils.IsArray(ids) == true)
+			if (CoreUtils.IsArray(ids) == true)
 			{
 				if (ids.length > 0)
 				{
@@ -1097,7 +1079,7 @@ class	AbstractServiceContext
 			}
 
 			// empty array but we need an assoc?
-			if ( ( (keepAssoc == true) || (itemsIsArray == true) ) && (ObjUtils.IsArray(convertedObjects) == true) )
+			if ( ( (keepAssoc == true) || (itemsIsArray == true) ) && (CoreUtils.IsArray(convertedObjects) == true) )
 				convertedObjects = {};
 
 			// replace it in the object
@@ -1123,28 +1105,11 @@ class	AbstractServiceContext
 				return _items;
 			}
 		}
-		// POST PROCESS REPORT
-		else if ( (_type == AppContext.TRANSFORM_POSTPROCESS_REPORT) && (_beforePopulate == false) )
-		{
-			return ReportBuilderPostProcessor.PostProcessReport(_items);
-		}
-		// POST PROCESS OAUTH OBJECT (SIGN IN)
-		else if ( (_type == AppContext.TRANSFORM_POSTPROCESS_OAUTH) && (_beforePopulate == false) )
-		{
-			return await this.postProcessOAuthObject(_items);
-		}
-		// POST PROCESS GAME INFO CREATE ORGANIZATION
-		else if ( (_type == AppContext.TRANSFORM_POSTPROCESS_NEW_ORG) && (_beforePopulate == false) )
-		{
-			return await this.postProcessNewOrg(_items, _queryFilters, _queryData);
-		}
-		// POST PROCESS GAME INFO CREATE GAME
-		else if ( (_type == AppContext.TRANSFORM_POSTPROCESS_NEW_GAME) && (_beforePopulate == false) )
-		{
-			return await this.postProcessNewGame(_items, _queryFilters, _queryData);
-		}
+		// custom
 		else
-			return _items;
+		{
+			return await this.transformItemsCustom(_items, _type, _filters, _queryFilters, _queryData, _authUserId, _beforePopulate);
+		}
 	}
 
 	isMainServiceEqual(_code)
@@ -1155,43 +1120,10 @@ class	AbstractServiceContext
 			return false;
 	}
 
-	async	postProcessNewOrg(_newOrgInfo, _queryFilters, _queryData)
-	{
-		// is our main service the API COMMON?
-		if (this.isMainServiceEqual(AppContext.SERVICE_API_GAMEINFO) == true)
-		{
-			return await this.__mainService.postProcessNewOrg(_newOrgInfo, _queryFilters, _queryData);
-		}
-		else
-			return _newOrgInfo;		
-	}
-
-	async	postProcessNewGame(_newOrgInfo, _queryFilters, _queryData)
-	{
-		// is our main service the API COMMON?
-		if (this.isMainServiceEqual(AppContext.SERVICE_API_GAMEINFO) == true)
-		{
-			return await this.__mainService.postProcessNewGame(_newOrgInfo, _queryFilters, _queryData);
-		}
-		else
-			return _newOrgInfo;		
-	}
-
-	async	postProcessOAuthObject(_object)
-	{
-		// is our main service the API COMMON?
-		if (this.isMainServiceEqual(AppContext.SERVICE_API_COMMON) == true)
-		{
-			return await this.__mainService.postProcessOAuthObject(_object);
-		}
-		else
-			return _object;
-	}
-
 	async	getItemInfoBatch(_ids, _type, _authUserId = 0)
 	{
 		// check in the cache first
-		let	typeWithoutCache = [AppContext.BATCH_TYPE_IS_FOLLOWING, AppContext.BATCH_TYPE_MEDIA_ENGAGEMENT];
+		let	typeWithoutCache = this.getBatchTypeWithoutCache();
 		let	useCache = typeWithoutCache.includes(_type) == false;
 		let	existingItems = {};
 		if (useCache == true)
@@ -1213,123 +1145,13 @@ class	AbstractServiceContext
 		}
 
 		// get the items
-		let	items = {};
-
-		// USERS?
-		if (_type == AppContext.BATCH_TYPE_USERS)
-		{
-			let	path = "/users_batch";
-			let	data = { "ids": _ids };
-			items = await this.queryServiceToJSON(QueryUtils.HTTP_METHOD_POST, AppContext.SERVICE_USERS, path, data);
-		}
-		// USERS BY USERNAME?
-		else if (_type == AppContext.BATCH_TYPE_USERS_BY_USERNAME)
-		{
-			let	path = "/users_by_username_batch";
-			let	data = { "usernames": _ids, "assoc": true };
-			items = await this.queryServiceToJSON(QueryUtils.HTTP_METHOD_POST, AppContext.SERVICE_USERS, path, data);
-		}
-		// MATCHES?
-		else if (_type == AppContext.BATCH_TYPE_MATCHES)
-		{
-			let	path = "/matches_batch";
-			let	data = { "ids": _ids };
-			items = await this.queryServiceToJSON(QueryUtils.HTTP_METHOD_POST, AppContext.SERVICE_PLAYER_SESSION, path, data);
-		}
-		// GAME PLAYERS?
-		else if (_type == AppContext.BATCH_TYPE_GAME_PLAYERS)
-		{
-			let	path = "/game_players_batch";
-			let	data = { "ids": _ids };
-			items = await this.queryServiceToJSON(QueryUtils.HTTP_METHOD_POST, AppContext.SERVICE_PLAYER_SESSION, path, data);
-		}		
-		// POSTS?
-		else if (_type == AppContext.BATCH_TYPE_POSTS)
-		{
-			let	path = "/posts_batch";
-			let	data = { "ids": _ids };
-			items = await this.queryServiceToJSON(QueryUtils.HTTP_METHOD_POST, AppContext.SERVICE_POSTS, path, data);
-		}
-		// ORGANIZATIONS?
-		else if (_type == AppContext.BATCH_TYPE_ORGANIZATION)
-		{
-			let	path = "/organizations_batch";
-			let	data = { "ids": _ids };
-			items = await this.queryServiceToJSON(QueryUtils.HTTP_METHOD_POST, AppContext.SERVICE_GAMEDATA, path, data);
-		}
-		// COMMENTS?
-		else if (_type == AppContext.BATCH_TYPE_COMMENTS)
-		{
-			let	path = "/comments_batch";
-			let	data = { "ids": _ids };
-			items = await this.queryServiceToJSON(QueryUtils.HTTP_METHOD_POST, AppContext.SERVICE_POSTS, path, data);
-		}
-		// STORIES?
-		else if (_type == AppContext.BATCH_TYPE_STORIES)
-		{
-			let	path = "/stories_batch";
-			let	data = { "ids": _ids };
-			items = await this.queryServiceToJSON(QueryUtils.HTTP_METHOD_POST, AppContext.SERVICE_POSTS, path, data);
-		}
-		// URL META?
-		else if (_type == AppContext.BATCH_TYPE_URL_META)
-		{
-			let	path = "/tools/url_meta/batch";
-			let	data = { "ids": _ids };
-			items = await this.queryServiceToJSON(QueryUtils.HTTP_METHOD_POST, AppContext.SERVICE_URL_META, path, data);
-		}
-		// MEDIA FILES?
-		else if (_type == AppContext.BATCH_TYPE_MEDIA_FILES)
-		{
-			// get the media info
-			let	path = "/media_files_batch";
-			let	data = { "ids": _ids };
-			items = await this.queryServiceToJSON(QueryUtils.HTTP_METHOD_POST, AppContext.SERVICE_PLAYER_VAULT, path, data);
-
-			// merge them
-			let	engagementData = await this.getMediaEngagement(_ids, _authUserId);
-			for(let itemId in items)
-			{
-				items[itemId]["nb_likes"] = ObjUtils.GetValueToInt(engagementData, itemId + ".nb_likes");
-				items[itemId]["nb_comments"] = ObjUtils.GetValueToInt(engagementData, itemId + ".nb_comments");
-				items[itemId]["is_liked"] = ObjUtils.GetValueToBool(engagementData, itemId + ".is_liked");
-			}
-		}
-		// MEDIA COMMENTS?
-		else if (_type == AppContext.BATCH_TYPE_MEDIA_COMMENTS)
-		{
-			let	path = "/media_comments_batch";
-			let	data = { "ids": _ids };
-			items = await this.queryServiceToJSON(QueryUtils.HTTP_METHOD_POST, AppContext.SERVICE_MEDIA_ENGAGEMENT, path, data);
-		}		
-		// MEDIA ENGAGEMENT?
-		else if (_type == AppContext.BATCH_TYPE_MEDIA_ENGAGEMENT)
-		{
-			// get the media engagement for the ids
-			items = await this.getMediaEngagement(_ids, _authUserId);
-		}		
-		// IS FOLLOWING?
-		else if (_type == AppContext.BATCH_TYPE_IS_FOLLOWING)
-		{
-			// get the list of followers
-			let	following = await this.getUserFollowing(_authUserId);
-
-			// build the list of followers
-			let	followingIds = {};
-			for(let i=0; i<_ids.length; i++)
-			{
-				let	userId = _ids[i];
-				followingIds[userId] = following.includes(userId);
-			}
-
-			items = followingIds;
-		}
+		let	items = await this.getItemInfoBatchCustom(_ids, _type, _authUserId);
 
 		// use the cache?
 		if (useCache == true)
 		{
 			// save the new items found
-			await this.cache_setMulti(_type, items, AppContext.CACHE_EXPIRATION_BATCH);
+			await this.cache_setMulti(_type, items, AbstractServiceContext.CACHE_EXPIRATION_BATCH);
 
 			// merge the final result
 			items = ObjUtils.Merge(existingItems, items);
@@ -1338,267 +1160,26 @@ class	AbstractServiceContext
 		return items;
 	}
 
-	async	getMediaEngagement(_ids, _authUserId)
-	{
-		let	path = "/media_engagement_batch";
-		let	data = { "ids": _ids, "likes_user_id": _authUserId };
-		return await this.queryServiceToJSON(QueryUtils.HTTP_METHOD_POST, AppContext.SERVICE_MEDIA_ENGAGEMENT, path, data);
-	}
-
 	async	getValueFromSource(_source, _filters, _authUserId = 0, _parameter = "", _userIdLocation = "auth_user_id")
 	{
-		let	value = null;
-
 		// determine the user id
 		let	userId = _authUserId;
 		if ( (StringUtils.IsEmpty(_userIdLocation) == false) && (_userIdLocation != "auth_user_id") )
 			userId = ObjUtils.GetValueToInt(_filters, _userIdLocation);
 			
-		// USER FOLLOWING
-		if (_source == AppContext.SOURCE_TYPE_USER_FOLLOWING)
-		{
-			// get the list of followers
-			value = await this.getUserFollowing(userId);
-		}
-		// USER GAME PLAYERS
-		else if (_source == AppContext.SOURCE_TYPE_USER_GAME_PLAYERS)
-		{
-			// get the list of game players
-			value = await this.getUserGamePlayers(userId);
-		}
 		// AUTH USER ID?
-		else if (_source == AppContext.SOURCE_TYPE_AUTH_USER_ID)
+		let	value = null;
+		if (_source == AbstractServiceContext.SOURCE_TYPE_AUTH_USER_ID)
 		{
 			value = _authUserId;
 		}
-		// USER ID FROM USERNAME
-		else if (_source == AppContext.SOURCE_TYPE_USER_ID_FROM_USERNAME)
+		else
 		{
-			// get the list of followers
-			let	userIdOrName = ObjUtils.GetValue(_filters, _parameter, "");
-			value = await this.getUserIdFromUserName(userIdOrName);
-		}
-		// LIST OF ORG AUTHORIZED FOR A USER IN GAMEINFO API
-		else if (_source == AppContext.SOURCE_TYPE_GAMEINFO_AUTH_ORG)
-		{
-			value = await this.getAuthorizedGameInfoOrg(userId);
+			value = await this.getValueFromSourceInternal(_source, _filters, _authUserId, _parameter, userId);
 		}
 
 		return value;
 	}
-
-	async	getAuthorizedGameInfoOrg(_userId)
-	{
-		// is our main service the API GAMEINFO?
-		let	orgs = [];
-		if (this.isMainServiceEqual(AppContext.SERVICE_API_GAMEINFO) == true)
-		{
-			orgs = await this.__mainService.getAuthorizedOrgForUser(_userId);
-
-			console.log("WE found the orgs here: " + orgs);
-		}
-
-		return orgs.join(",");
-	}
-
-	async	getUserIdFromUserName(_userNameOrId)
-	{
-		// try to convert it to number
-		let	userId = StringUtils.ToInt(_userNameOrId);
-		if (userId == 0)
-		{
-			// look in the cache
-			_userNameOrId = _userNameOrId.toLowerCase();
-			userId = await this.cache_get(AppContext.CACHE_CATEGORY_USER_ID_BY_USERNAME, _userNameOrId, 0);
-
-			// still nothing?
-			if (userId == 0)
-			{
-				// look in the cache if we have that user
-				let	userInfo = await this.cache_get(AppContext.BATCH_TYPE_USERS_BY_USERNAME, _userNameOrId);
-				
-				// if nothing, we go into the webservice
-				if (userInfo == null)
-				{
-					// get the user info
-					let	path = "/users_by_username/" + _userNameOrId;
-					userInfo = await this.queryServiceToJSON(QueryUtils.HTTP_METHOD_GET, AppContext.SERVICE_USERS, path);
-				}
-			
-				// do we have it now?
-				if (userInfo != null)
-				{
-					// get the id
-					userId = ObjUtils.GetValueToInt(userInfo, "id");
-
-					// save it in the cache
-					await this.cache_set(AppContext.CACHE_CATEGORY_USER_ID_BY_USERNAME, _userNameOrId, userId, AppContext.CACHE_EXPIRATION_USER_ID_BY_USERNAME);
-				}
-			}
-		}
-
-		return userId;
-	}
-
-	async	getUserFollowing(_userId)
-	{
-		let	following = [];
-		if (_userId != 0)
-		{
-			// check the cache
-			let	followingFromCache = await this.cache_get(AppContext.CACHE_CATEGORY_USER_FOLLOWING, _userId);
-			if (followingFromCache != null)
-				return followingFromCache;
-
-			// get the list of followers
-			let	path = "/users/" + _userId + "/followers";
-			let	data = {
-				"following": true
-			};
-			following = await this.queryServiceToJSON(QueryUtils.HTTP_METHOD_GET, AppContext.SERVICE_POSTS, path, data);
-
-			// save to the cache
-			await this.cache_set(AppContext.CACHE_CATEGORY_USER_FOLLOWING, _userId, following, AppContext.CACHE_EXPIRATION_USER_FOLLOWING);
-		}
-		return following;
-	}
-
-	async	getUserGamePlayers(_userId)
-	{
-		let	gamePlayerIds = [];
-		if (_userId != 0)
-		{
-			// check the cache
-			let	gamePlayerIdsFromCache = await this.cache_get(AppContext.CACHE_CATEGORY_USER_GAME_PLAYERS, _userId);
-			if (gamePlayerIdsFromCache != null)
-				return gamePlayerIdsFromCache;
-
-			// get the list of followers
-			let	path = "/users/" + _userId + "/games";
-			let	data = {
-				"only_ids": true
-			};
-			gamePlayerIds = await this.queryServiceToJSON(QueryUtils.HTTP_METHOD_GET, AppContext.SERVICE_PLAYER_SESSION, path, data);
-
-			// save to the cache
-			await this.cache_set(AppContext.CACHE_CATEGORY_USER_GAME_PLAYERS, _userId, gamePlayerIds, AppContext.CACHE_EXPIRATION_USER_GAME_PLAYERS);
-		}
-		return gamePlayerIds;
-	}
-
-	static	create(_vertx, _env, _config, _isAdmin = false)
-	{
-		return new AppContext(_vertx, _env, _config, _isAdmin);
-	}
-
-	static	GetServicesHostConfig(_env)
-	{
-		let	config = {};
-		switch(_env)
-		{
-			// PROD
-			case 'production':
-				config[AppContext.SERVICE_REPORT_BUILDER] = "report-builder-z3vhyoqqcq-uc.a.run.app";
-				config[AppContext.SERVICE_PLAYER_VAULT] = "player-vault-z3vhyoqqcq-uc.a.run.app";
-				config[AppContext.SERVICE_PLAYER_SESSION] = "player-session-z3vhyoqqcq-uc.a.run.app";
-				config[AppContext.SERVICE_PLAYER_STATUS] = "player-status-z3vhyoqqcq-uc.a.run.app";
-				config[AppContext.SERVICE_PLAYER_STATS] = "player-stats-z3vhyoqqcq-uc.a.run.app";
-				config[AppContext.SERVICE_PLAYER_ENCOUNTERS] = "player-encounters-z3vhyoqqcq-uc.a.run.app";
-				config[AppContext.SERVICE_USERS] = "users-z3vhyoqqcq-uc.a.run.app";
-				config[AppContext.SERVICE_GAME_INFO] = "game-info-z3vhyoqqcq-uc.a.run.app";
-				config[AppContext.SERVICE_POSTS] = "posts-z3vhyoqqcq-uc.a.run.app";
-				config[AppContext.SERVICE_NOTIFICATION_LISTENER] = "notification-listener-z3vhyoqqcq-uc.a.run.app";
-				config[AppContext.SERVICE_NOTIFICATION_SENDER] = "notification-sender-z3vhyoqqcq-uc.a.run.app";
-				config[AppContext.SERVICE_URL_META] = "url-meta-z3vhyoqqcq-uc.a.run.app";
-				config[AppContext.SERVICE_HEALTH_DATA] = "health-data-z3vhyoqqcq-uc.a.run.app";
-				config[AppContext.SERVICE_WALLET] = "wallet-z3vhyoqqcq-uc.a.run.app";
-				config[AppContext.SERVICE_MAINTENANCE] = "maintenance-z3vhyoqqcq-uc.a.run.app";
-				config[AppContext.SERVICE_OAUTH] = "oauth-z3vhyoqqcq-uc.a.run.app";
-				config[AppContext.SERVICE_COMPANION_APP] = "companion-app-z3vhyoqqcq-uc.a.run.app";
-				config[AppContext.SERVICE_TASK_PROCESSOR] = "task-processor-z3vhyoqqcq-uc.a.run.app";
-				config[AppContext.SERVICE_GAME_RIOT] = "game-riot-z3vhyoqqcq-uc.a.run.app";
-				config[AppContext.SERVICE_GAME_CHESS] = "game-chess-z3vhyoqqcq-uc.a.run.app";
-				config[AppContext.SERVICE_GAME_VALVE] = "game-valve-z3vhyoqqcq-uc.a.run.app";
-				config[AppContext.SERVICE_GAME_NEWS] = "game-news-z3vhyoqqcq-uc.a.run.app";
-				config[AppContext.SERVICE_GAME_FORTNITE] = "game-fortnite-z3vhyoqqcq-uc.a.run.app";
-				config[AppContext.SERVICE_GAMEDATA] = "gamedata-z3vhyoqqcq-uc.a.run.app";
-				config[AppContext.SERVICE_ANALYTICS] = "analytics-z3vhyoqqcq-uc.a.run.app";
-				config[AppContext.SERVICE_MODERATION] = "moderation-z3vhyoqqcq-uc.a.run.app";
-				config[AppContext.SERVICE_DATA_AGGREGATOR] = "data-aggregator-z3vhyoqqcq-uc.a.run.app";
-				config[AppContext.SERVICE_MEDIA_ENGAGEMENT] = "media-engagement-z3vhyoqqcq-uc.a.run.app";
-				config[AppContext.SERVICE_VIDEO_GENERATOR] = "video-generator-z3vhyoqqcq-uc.a.run.app";
-				break;
-
-			// STAGING
-			case 'staging':
-				config[AppContext.SERVICE_REPORT_BUILDER] = "report-builder-qsyoovkouq-uc.a.run.app";
-				config[AppContext.SERVICE_PLAYER_VAULT] = "player-vault-qsyoovkouq-uc.a.run.app";
-				config[AppContext.SERVICE_PLAYER_SESSION] = "player-session-qsyoovkouq-uc.a.run.app";
-				config[AppContext.SERVICE_PLAYER_STATUS] = "player-status-qsyoovkouq-uc.a.run.app";
-				config[AppContext.SERVICE_PLAYER_STATS] = "player-stats-qsyoovkouq-uc.a.run.app";
-				config[AppContext.SERVICE_PLAYER_ENCOUNTERS] = "player-encounters-qsyoovkouq-uc.a.run.app";
-				config[AppContext.SERVICE_USERS] = "users-qsyoovkouq-uc.a.run.app";
-				config[AppContext.SERVICE_GAME_INFO] = "game-info-qsyoovkouq-uc.a.run.app";
-				config[AppContext.SERVICE_POSTS] = "posts-qsyoovkouq-uc.a.run.app";
-				config[AppContext.SERVICE_NOTIFICATION_LISTENER] = "notification-listener-qsyoovkouq-uc.a.run.app";
-				config[AppContext.SERVICE_NOTIFICATION_SENDER] = "notification-sender-qsyoovkouq-uc.a.run.app";
-				config[AppContext.SERVICE_URL_META] = "url-meta-qsyoovkouq-uc.a.run.app";
-				config[AppContext.SERVICE_HEALTH_DATA] = "health-data-qsyoovkouq-uc.a.run.app";
-				config[AppContext.SERVICE_WALLET] = "wallet-qsyoovkouq-uc.a.run.app";
-				config[AppContext.SERVICE_MAINTENANCE] = "maintenance-qsyoovkouq-uc.a.run.app";
-				config[AppContext.SERVICE_OAUTH] = "oauth-qsyoovkouq-uc.a.run.app";
-				config[AppContext.SERVICE_COMPANION_APP] = "companion-app-qsyoovkouq-uc.a.run.app";
-				config[AppContext.SERVICE_TASK_PROCESSOR] = "task-processor-qsyoovkouq-uc.a.run.app";
-				config[AppContext.SERVICE_GAME_RIOT] = "game-riot-qsyoovkouq-uc.a.run.app";
-				config[AppContext.SERVICE_GAME_CHESS] = "game-chess-qsyoovkouq-uc.a.run.app";
-				config[AppContext.SERVICE_GAME_VALVE] = "game-valve-qsyoovkouq-uc.a.run.app";
-				config[AppContext.SERVICE_GAME_NEWS] = "game-news-qsyoovkouq-uc.a.run.app";
-				config[AppContext.SERVICE_GAME_FORTNITE] = "game-fortnite-qsyoovkouq-uc.a.run.app";
-				config[AppContext.SERVICE_GAMEDATA] = "gamedata-qsyoovkouq-uc.a.run.app";
-				config[AppContext.SERVICE_ANALYTICS] = "analytics-qsyoovkouq-uc.a.run.app";
-				config[AppContext.SERVICE_MODERATION] = "moderation-qsyoovkouq-uc.a.run.app";
-				config[AppContext.SERVICE_DATA_AGGREGATOR] = "data-aggregator-qsyoovkouq-uc.a.run.app";
-				config[AppContext.SERVICE_MEDIA_ENGAGEMENT] = "media-engagement-qsyoovkouq-uc.a.run.app";
-				config[AppContext.SERVICE_VIDEO_GENERATOR] = "video-generator-qsyoovkouq-uc.a.run.app";
-				break;
-
-			// LOCAL
-			case 'development':	// DEV
-			default:			// LOCAL
-				config[AppContext.SERVICE_REPORT_BUILDER] = "report-builder-ibliue6rpa-uc.a.run.app";
-				config[AppContext.SERVICE_PLAYER_VAULT] = "player-vault-ibliue6rpa-uc.a.run.app";
-				config[AppContext.SERVICE_PLAYER_SESSION] = "player-session-ibliue6rpa-uc.a.run.app";
-				config[AppContext.SERVICE_PLAYER_STATUS] = "player-status-ibliue6rpa-uc.a.run.app";
-				config[AppContext.SERVICE_PLAYER_STATS] = "player-stats-ibliue6rpa-uc.a.run.app";
-				config[AppContext.SERVICE_PLAYER_ENCOUNTERS] = "player-encounters-ibliue6rpa-uc.a.run.app";
-				config[AppContext.SERVICE_USERS] = "users-ibliue6rpa-uc.a.run.app";
-				config[AppContext.SERVICE_GAME_INFO] = "game-info-ibliue6rpa-uc.a.run.app";
-				config[AppContext.SERVICE_POSTS] = "posts-ibliue6rpa-uc.a.run.app";
-				config[AppContext.SERVICE_NOTIFICATION_LISTENER] = "notification-listener-ibliue6rpa-uc.a.run.app";
-				config[AppContext.SERVICE_NOTIFICATION_SENDER] = "notification-sender-ibliue6rpa-uc.a.run.app";
-				config[AppContext.SERVICE_URL_META] = "url-meta-ibliue6rpa-uc.a.run.app";
-				config[AppContext.SERVICE_HEALTH_DATA] = "health-data-ibliue6rpa-uc.a.run.app";
-				config[AppContext.SERVICE_WALLET] = "wallet-ibliue6rpa-uc.a.run.app";
-				config[AppContext.SERVICE_MAINTENANCE] = "maintenance-ibliue6rpa-uc.a.run.app";
-				config[AppContext.SERVICE_OAUTH] = "oauth-ibliue6rpa-uc.a.run.app";
-				config[AppContext.SERVICE_COMPANION_APP] = "companion-app-ibliue6rpa-uc.a.run.app";
-				config[AppContext.SERVICE_TASK_PROCESSOR] = "task-processor-ibliue6rpa-uc.a.run.app";
-				config[AppContext.SERVICE_GAME_RIOT] = "game-riot-ibliue6rpa-uc.a.run.app";
-				config[AppContext.SERVICE_GAME_CHESS] = "game-chess-ibliue6rpa-uc.a.run.app";
-				config[AppContext.SERVICE_GAME_VALVE] = "game-valve-ibliue6rpa-uc.a.run.app";
-				config[AppContext.SERVICE_GAME_NEWS] = "game-news-ibliue6rpa-uc.a.run.app";
-				config[AppContext.SERVICE_GAME_FORTNITE] = "game-fortnite-ibliue6rpa-uc.a.run.app";
-				config[AppContext.SERVICE_GAMEDATA] = "gamedata-ibliue6rpa-uc.a.run.app";
-				config[AppContext.SERVICE_ANALYTICS] = "analytics-ibliue6rpa-uc.a.run.app";
-				config[AppContext.SERVICE_MODERATION] = "moderation-ibliue6rpa-uc.a.run.app";
-				config[AppContext.SERVICE_DATA_AGGREGATOR] = "data-aggregator-ibliue6rpa-uc.a.run.app";
-				config[AppContext.SERVICE_MEDIA_ENGAGEMENT] = "media-engagement-ibliue6rpa-uc.a.run.app";
-				config[AppContext.SERVICE_VIDEO_GENERATOR] = "video-generator-ibliue6rpa-uc.a.run.app";
-				break;
-		}		
-
-		return config;
-	}		
 }
 
 module.exports = {
