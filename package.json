@@ -29,6 +29,7 @@
 		"postinstall": "es4x install",
 		"start": "es4x",
 		"test:Service": "es4x test tests/Service.test.js",
-		"test:Server": "es4x tests/test.index.js"
+		"test:ServerStart": "es4x tests/test.index.js",
+		"test:Server": "es4x test tests/Server.test.js"
 	}
 }

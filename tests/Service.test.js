@@ -40,7 +40,7 @@ suite.test("Service.Init", async function (context) {
 		context.assertEquals(appContext.hasCache(), true);
 
 		// now we are going to run some of the tests
-		let	testsToDo = ObjUtils.GetValue(config, "tests", []);
+		let	testsToDo = ObjUtils.GetValue(config, "service_actions", []);
 		for(let test of testsToDo)
 		{
 			// get the action parameters
