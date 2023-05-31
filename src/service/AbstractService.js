@@ -125,10 +125,21 @@ class	AbstractService
 
 	createLogMessage(_message, _model = "")
 	{
-		let	newMessage = "[" + this.getServiceCode();
-		if (StringUtils.IsEmpty(_model) == false)
-			newMessage += "." + _model;
-		newMessage += "] " + _message;
+		let	newMessage = "";
+
+		// add the service and model
+		let	serviceCode = this.getServiceCode();
+		if (StringUtils.IsEmpty(serviceCode) == false)
+		{
+			newMessage += "[" + this.getServiceCode();
+			if (StringUtils.IsEmpty(_model) == false)
+				newMessage += "." + _model;
+			newMessage += "] ";
+		}
+
+		// add the message
+		newMessage += _message;
+
 		return newMessage;
 	}
 
