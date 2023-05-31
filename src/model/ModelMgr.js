@@ -13,7 +13,7 @@ class	ModelMgr
 
 	getModel(_type)
 	{
-		if (this.__models.hasOwnProperty(_type) == false)
+		if (this.__models.hasOwnProperty(_type) == true)
 			return this.__models[_type];
 		else
 			return null;

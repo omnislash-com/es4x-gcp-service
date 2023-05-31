@@ -1,0 +1,17 @@
+{
+	"tests": [
+		{
+			"model": "test_model",
+			"action": "read",
+			"filters": {
+				"id": "value"
+			},
+			"data": {
+
+			},
+			"tests": {
+				"field": "value"
+			}
+		}
+	]
+}
