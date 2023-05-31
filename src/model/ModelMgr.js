@@ -26,20 +26,28 @@ class	ModelMgr
 		if (StringUtils.IsEmpty(classFile) == false)
 		{
 			// import the source code
-			let	modelClass = require(_modelFolder + classFile);
-
-			// now create an instance of it
-			let	modelInstance = new modelClass(this.__service, _config);
-
-			// is it valid?
-			if (modelInstance.isValid() == true)
+			try
 			{
-				// get the code
-				let	code = modelInstance.getModelCode();
+				let	modelClass = require(_modelFolder + classFile);
 
-				// add it
-				this.__models[code] = modelInstance;
+				// now create an instance of it
+				let	modelInstance = new modelClass(this.__service, _config);
+	
+				// is it valid?
+				if (modelInstance.isValid() == true)
+				{
+					// get the code
+					let	code = modelInstance.getModelCode();
+	
+					// add it
+					this.__models[code] = modelInstance;
+				}
 			}
+			catch(e)
+			{
+				console.trace(e);
+				console.log("Couldn't create class from: " + _modelFolder + classFile);
+			}			
 		}
 	}
 
