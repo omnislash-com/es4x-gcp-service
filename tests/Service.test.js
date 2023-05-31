@@ -52,10 +52,18 @@ suite.test("Service.Init", async function (context) {
 			let	tests = ObjUtils.GetValue(test, "tests");
 			for(let key in tests)
 			{
-				let	value = ObjUtils.GetValue(ret, key);
+				// special key?
+				if (key == "**length**")
+				{
+					context.assertEquals(tests[key], ret.length);
+				}
+				else
+				{
+					let	value = ObjUtils.GetValue(ret, key);
 
-				// same?
-				context.assertEquals(tests[key], value);
+					// same?
+					context.assertEquals(tests[key], value);
+				}
 			}
 		}
 	}

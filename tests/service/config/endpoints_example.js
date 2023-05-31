@@ -46,7 +46,7 @@ module.exports = {
 						{
 							"action": "read",
 							"summary": "Reads an entry",
-							"description": "Returns a list of game activity",
+							"description": "Returns an object",
 							"parameters": [
 								{
 									"name": "id",
@@ -68,6 +68,69 @@ module.exports = {
 						},
 					],
 
+
+					/*************************
+					 * 
+					 *	/test/endpoint/list/:user_id
+					*
+					*************************/
+					"/test/endpoint/list/:user_id": [
+						{
+							"action": "list",
+							"summary": "List objects",
+							"description": "Returns a list of objects",
+							"parameters": [
+								{
+									"name": "user_id",
+									"description": "User id to filter",
+									"in": "path",
+									"required": true,
+									"schema": {
+										"type": "integer",
+										"format": "int32"
+									}
+								},
+								{
+									"name": "order_by",
+									"description": "Option to order by",
+									"in": "query",
+									"required": false,
+									"schema": {
+										"type": "string"
+									}
+								},
+								{
+									"name": "limit",
+									"description": "Page size for pagination",
+									"in": "query",
+									"required": false,
+									"schema": {
+										"type": "integer",
+										"format": "int32"
+									}
+								},
+								{
+									"name": "offset",
+									"description": "Offset for pagination",
+									"in": "query",
+									"required": false,
+									"schema": {
+										"type": "integer",
+										"format": "int32"
+									}
+								},
+							],
+							"response": {
+								"description": "List of object",
+								"schema": {
+									"type": "array",
+									"items": {
+										"$ref": "#/components/schemas/TestModelStructure"
+									}
+								}
+							}
+						},
+					],					
 				}
 			}
 			

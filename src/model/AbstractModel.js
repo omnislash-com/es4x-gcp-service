@@ -33,11 +33,19 @@ class	AbstractModel
 		this.__firestorePath = ObjUtils.GetValueToString(_config, "firestore_path");
 		this.__canUpdate = ObjUtils.GetValueToBool(_config, "can_update");
 		this.__canDelete = ObjUtils.GetValueToBool(_config, "can_delete");
+		this.__orderByOptions = ObjUtils.GetValue(_config, "order_by_options", []);
+		this.__paginationActive = ObjUtils.GetValueToBool(_config, "pagination.active", true);
+		this.__paginationSize = ObjUtils.GetValueToInt(_config, "pagination.default_page_size", 20);
 	}
 
 	isValid()
 	{
 		return StringUtils.IsEmpty(this.__code) == false;
+	}
+
+	getOrderByOptions()
+	{
+		return this.__orderByOptions;
 	}
 
 	getModelCode()
@@ -75,15 +83,8 @@ class	AbstractModel
 		throw new Error("Abstract Method has no implementation");
 	}
 
-	async	list(_filters)
-	{
-		return [];
-	}	
 
-	async	listBatch(_filters, _data)
-	{
-		throw new Error("Abstract Method has no implementation");
-	}	
+
 
 	getConfig(_key, _default = null)
 	{
@@ -115,60 +116,8 @@ class	AbstractModel
 		return this.getService().getGoogleApi();
 	}
 
-	async	cache_del(_category, _key)
-	{
-		return await this.getService().cache_del(_category, _key);
-	}
 
-	async	cache_set(_category, _key, _val, _expirationSec = 0)
-	{
-		return await this.getService().cache_set(_category, _key, _val, _expirationSec);
-	}
 
-	async	cache_get(_category, _key, _default = null)
-	{
-		return await this.getService().cache_get(_category, _key, _default);
-	}
-
-	async	cache_setMulti(_category, _keyValues, _expirationSec = 0)
-	{
-		return await this.getService().cache_setMulti(_category, _keyValues, _expirationSec);
-	}
-
-	async	cache_getMulti(_category, _keys)
-	{
-		return await this.getService().cache_getMulti(_category, _keys);
-	}
-
-	log(_message, _payload = null)
-	{
-		this.getService().log(_message, _payload, this.getModelCode());
-	}
-
-	logWarning(_message, _payload = null)
-	{
-		this.getService().logWarning(_message, _payload, this.getModelCode());
-	}
-
-	logError(_message, _payload = null)
-	{
-		this.getService().logError(_message, _payload, this.getModelCode());
-	}
-
-	subscribe(_modelCode, _event, _service = "")
-	{
-		this.getService().addSubscriber(this.getModelCode(), _modelCode, _event, _service);
-	}
-
-	isAdmin(_filters)
-	{
-		return this.getService().isAdmin(_filters);
-	}
-
-	async	doOnModel(_model, _action, _filters, _data = null)
-	{
-		return await this.getService().doOnModel(_model, _action, _filters, _data);
-	}
 
 	async	do(_action, _filters, _data, _callbackData = null)
 	{
@@ -216,90 +165,21 @@ class	AbstractModel
 		// CUSTOM
 		else
 			return await this.doCustom(_action, _filters, _data, _callbackData);
-	}
-
-	// Override that method to process custom actions
-	async	doCustom(_action, _filters, _data, _callbackData=null)
-	{
-		return null;
-	}
-
-	async	prepareDataForUpdate(_filters, _data)
-	{
-		return _data;
-	}
-
-	async	getReadQuery(_filters)
-	{
-		return {
-			tables: [
-				this.__table
-			],
-			fields: [
-				this.__table + ".*"
-			],
-			conditions: this.getConditionForIdOrCode(_filters),
-			order_by: [],
-			group_by: []
-		};
-	}
-
-	getFirestorePathAndIdToObject(_filters)
-	{
-		return {
-			path: this.getFirestorePath(_filters),
-			id: this.getFirestoreObjectId(_filters)
-		};
 	}	
 
-	getFirestoreObjectId(_filters)
+	async	list(_filters)
 	{
-		// id?
-		if (ObjUtils.HasProperty(_filters, "id") == true)
-			return _filters["id"];
-		// code?
-		else if (ObjUtils.HasProperty(_filters, "code") == true)
-			return _filters["code"];
-		else
-			return "";
-	}
+		// list the rows
+		let	rows = await this.listDb(_filters);
 
-	async	readDb(_filters)
+		// process them
+		return await this.postReadProcessingList(rows, _filters);
+	}	
+
+	async	listBatch(_filters, _data)
 	{
-		// FIRESTORE?
-		if (this.isFirestore() == true)
-		{
-			// get the path and id
-			let	pathAndId = this.getFirestorePathAndIdToObject(_filters);
-
-			// read Firestore
-			let	ret = await this.getGoogleApi().firestore_get(pathAndId.path, pathAndId.id);
-
-			return ObjUtils.GetValue(ret, "data");
-		}
-		// PGSQL
-		else
-		{
-			return await this.readPgSql(_filters);
-		}
-	}
-
-	async	readPgSql(_filters)
-	{
-		// build the query
-		let	query = await this.getReadQuery(_filters);
-		if (query.conditions.length == 0)
-			return null;
-
-		// verify the rest
-		if (ObjUtils.HasProperty(query, "order_by") == false)
-			query["order_by"] = [];
-		if (ObjUtils.HasProperty(query, "group_by") == false)
-			query["group_by"] = [];
-
-		// execute
-		return await this.queryFromConditionsToRow(query.tables, query.conditions, query.fields, query.order_by, 0, query.group_by);
-	}
+		throw new Error("Abstract Method has no implementation");
+	}	
 
 	async	read(_filters)
 	{
@@ -328,9 +208,146 @@ class	AbstractModel
 		return result;	
 	}
 
-	async	handleReadNullResult(_filters)
+	async	create(_filters, _data)
+	{
+		// clean up the data
+		let	realData = await this.prepareDataForCreate(_filters, _data);
+		if (realData == null)
+			return null;
+
+		// insert and return the object
+		return await this.createDb(realData);
+	}	
+
+	async	createBatch(_filters, _data)
+	{
+		// insert multi
+		return await this.queryInsertBatch(_data);
+	}
+
+	async	update(_filters, _data, _addUpdatedAt = false)
+	{
+		// make sure we can
+		let	ok = await this.canUpdate(_filters, _data);
+		if (ok == false)
+			return null;
+
+		// clean up the data
+		let	realData = await this.prepareDataForUpdate(_filters, _data);
+		if (realData == null)
+			return null;
+
+		// update it
+		let	ret = await this.updateDb(_filters, realData, _addUpdatedAt);
+
+		// post update
+		if (ret == true)
+		{
+			await this.postUpdate(_filters, _data, realData);
+		}
+
+		return ret;
+	}	
+
+	async	delete(_filters)
+	{
+		// make sure we can
+		let	ok = await this.canDelete(_filters);
+		if (ok == false)
+			return false;
+
+		// pre processing
+		await this.preDeleteProcessing(_filters);
+
+		// execute
+		let	ret = await this.deleteDb(_filters);
+
+		// if good we post process
+		if (ret == true)
+		{
+			// post processing
+			await this.postDeleteProcessing(_filters);
+
+			// delete from cache
+			await this.cache_delete_del(_filters);
+		}
+
+		return ret;
+	}	
+
+	async	insertActionToBatchWrite(_filters, _data)
+	{
+		// get the batch write info
+		let	batchInfo = ObjUtils.GetValue(_filters, "info", null);
+		if (ObjUtils.IsValid(batchInfo) == false)
+			batchInfo = this.firestoreBatch_init();
+
+		// get the type of action
+		let	action = ObjUtils.GetValueToString(_filters, "action");
+		let	filters = ObjUtils.GetValue(_data, "filters");
+
+		// depending on the action
+		// - CREATE
+		if (action == AbstractModel.ACTION_CREATE)
+		{
+			let	realData = ObjUtils.GetValue(_data, "data");
+			batchInfo = await this.firestoreBatch_create(batchInfo, filters, realData);
+		}
+		// - UPDATE
+		else if (action == AbstractModel.ACTION_UPDATE)
+		{
+			let	realData = ObjUtils.GetValue(_data, "data");
+			let	addUpdatedAt = ObjUtils.GetValueToBool(_data, "add_updated_at");
+			batchInfo = await this.firestoreBatch_update(batchInfo, filters, realData, addUpdatedAt);
+		}
+		// - DELETE
+		else if (action == AbstractModel.ACTION_DELETE)
+		{
+			batchInfo = await this.firestoreBatch_delete(batchInfo, filters);
+		}
+
+		return batchInfo;
+	}
+
+	// Override that method to process custom actions
+	async	doCustom(_action, _filters, _data, _callbackData=null)
 	{
 		return null;
+	}
+
+
+
+
+
+
+
+
+
+
+
+	async	cache_del(_category, _key)
+	{
+		return await this.getService().cache_del(_category, _key);
+	}
+
+	async	cache_set(_category, _key, _val, _expirationSec = 0)
+	{
+		return await this.getService().cache_set(_category, _key, _val, _expirationSec);
+	}
+
+	async	cache_get(_category, _key, _default = null)
+	{
+		return await this.getService().cache_get(_category, _key, _default);
+	}
+
+	async	cache_setMulti(_category, _keyValues, _expirationSec = 0)
+	{
+		return await this.getService().cache_setMulti(_category, _keyValues, _expirationSec);
+	}
+
+	async	cache_getMulti(_category, _keys)
+	{
+		return await this.getService().cache_getMulti(_category, _keys);
 	}
 
 	cache_read_getKey(_filters)
@@ -390,6 +407,232 @@ class	AbstractModel
 		}
 	}
 
+
+
+
+
+
+	log(_message, _payload = null)
+	{
+		this.getService().log(_message, _payload, this.getModelCode());
+	}
+
+	logWarning(_message, _payload = null)
+	{
+		this.getService().logWarning(_message, _payload, this.getModelCode());
+	}
+
+	logError(_message, _payload = null)
+	{
+		this.getService().logError(_message, _payload, this.getModelCode());
+	}
+
+	subscribe(_modelCode, _event, _service = "")
+	{
+		this.getService().addSubscriber(this.getModelCode(), _modelCode, _event, _service);
+	}
+
+	isAdmin(_filters)
+	{
+		return this.getService().isAdmin(_filters);
+	}
+
+	async	doOnModel(_model, _action, _filters, _data = null)
+	{
+		return await this.getService().doOnModel(_model, _action, _filters, _data);
+	}
+
+
+
+
+	getTables()
+	{
+		return [
+			this.__table
+		];
+	}
+
+	getFields(_filters)
+	{
+		return [];
+	}
+
+	async	prepareDataForUpdate(_filters, _data)
+	{
+		return _data;
+	}
+
+	async	getReadQuery(_filters)
+	{
+		return {
+			tables: this.getTables(),
+			fields: this.getFields(_filters),
+			conditions: this.getConditionForIdOrCode(_filters),
+			order_by: [],
+			group_by: []
+		};
+	}
+
+	async	getListQueryPgSql(_filters)
+	{
+		// prepare the query information
+		return {
+			tables: this.getTables(),
+			fields: this.getFields(_filters),
+			conditions: this.getConditionsForList(_filters),
+			order_by: this.getOrderBy(_filters),
+			group_by: [],
+			offset: this.getQueryOffset(_filters),
+			limit: this.getQueryLimit(_filters)	
+		};
+	}
+
+	getQueryLimit(_filters)
+	{
+		let	limit = 0;
+		if (this.__paginationActive == true)
+		{
+			// limit
+			limit = ObjUtils.GetValueToInt(_filters, "limit", this.__paginationSize);
+			if (limit <= 0)
+				limit = this.__paginationSize;
+		}
+		return limit;
+	}
+
+	getQueryOffset(_filters)
+	{
+		let	offset = 0;
+		if (this.__paginationActive == true)
+		{
+			// offset
+			offset = ObjUtils.GetValueToInt(_filters, "offset");
+			if (offset < 0)
+				offset = 0;
+		}
+		return offset;
+	}
+
+	getOrderBy(_filters)
+	{
+		// get the options
+		let	options = this.getOrderByOptions();
+
+		// nothing?
+		if (ArrayUtils.IsEmpty(options) == true)
+			return [];
+
+		// get the value in parameter
+		let	value = ObjUtils.GetValueToString(_filters, "order_by").toLowerCase();
+
+		// is it part of the options?
+		if (options.includes(value) == false)
+			value = options[0];
+		
+		// return it
+		return [
+			this.field(value)
+		];
+	}
+
+	getConditionsForList(_filters)
+	{
+		return [];
+	}
+
+	getFirestorePathAndIdToObject(_filters)
+	{
+		return {
+			path: this.getFirestorePath(_filters),
+			id: this.getFirestoreObjectId(_filters)
+		};
+	}	
+
+	getFirestoreObjectId(_filters)
+	{
+		// id?
+		if (ObjUtils.HasProperty(_filters, "id") == true)
+			return _filters["id"];
+		// code?
+		else if (ObjUtils.HasProperty(_filters, "code") == true)
+			return _filters["code"];
+		else
+			return "";
+	}
+
+	async	readDb(_filters)
+	{
+		// FIRESTORE?
+		if (this.isFirestore() == true)
+		{
+			// get the path and id
+			let	pathAndId = this.getFirestorePathAndIdToObject(_filters);
+
+			// read Firestore
+			let	ret = await this.getGoogleApi().firestore_get(pathAndId.path, pathAndId.id);
+
+			return ObjUtils.GetValue(ret, "data");
+		}
+		// PGSQL
+		else
+		{
+			return await this.readPgSql(_filters);
+		}
+	}
+
+	async	readPgSql(_filters)
+	{
+		// build the query
+		let	query = await this.getReadQuery(_filters);
+		if (query.conditions.length == 0)
+			return null;
+
+		// verify the rest
+		if (ObjUtils.HasProperty(query, "order_by") == false)
+			query["order_by"] = [];
+		if (ObjUtils.HasProperty(query, "group_by") == false)
+			query["group_by"] = [];
+
+		// execute
+		return await this.queryFromConditionsToRow(query.tables, query.conditions, query.fields, query.order_by, 0, query.group_by);
+	}
+
+	async	handleReadNullResult(_filters)
+	{
+		return null;
+	}
+
+	async	listDb(_filters)
+	{
+		// FIRESTORE?
+		if (this.isFirestore() == true)
+		{
+			// get the query info
+			let	queryInfo = await this.getListQueryFirestore(_filters);
+
+			// execute it
+			return await this.firestoreList(queryInfo.path, queryInfo.order_by, queryInfo.limit);
+		}
+		// PGSQL
+		else
+		{
+			// get the query
+			let	queryInfo = await this.getListQueryPgSql(_filters);
+
+			// execute
+			return await this.queryFromConditionsToList(queryInfo.tables, queryInfo.conditions, queryInfo.fields, queryInfo.order_by, queryInfo.limit, queryInfo.group_by, queryInfo.offset);
+		}		
+	}
+
+	async	getListQueryFirestore(_filters)
+	{
+		return {
+			path: this.getFirestorePath(_filters),
+			order_by: this.getOrderBy(_filters),
+			limit: this.getQueryLimit(_filters)
+		};
+	}
+
 	async	postReadProcessing(_result, _filters)
 	{
 		return _result;
@@ -401,7 +644,8 @@ class	AbstractModel
 		for(let result of _listOfResults)
 		{
 			let	newResult = await this.postReadProcessing(result, _filters);
-			finalList.push(newResult);
+			if (newResult != null)
+				finalList.push(newResult);
 		}
 		return finalList;
 	}
@@ -462,22 +706,9 @@ class	AbstractModel
 		}
 	}
 
-	async	create(_filters, _data)
-	{
-		// clean up the data
-		let	realData = await this.prepareDataForCreate(_filters, _data);
-		if (realData == null)
-			return null;
 
-		// insert and return the object
-		return await this.createDb(realData);
-	}	
 
-	async	createBatch(_filters, _data)
-	{
-		// insert multi
-		return await this.queryInsertBatch(_data);
-	}
+
 
 	async	updateDb(_filters, _data, _addUpdatedAt = false)
 	{
@@ -509,29 +740,7 @@ class	AbstractModel
 		}
 	}
 
-	async	update(_filters, _data, _addUpdatedAt = false)
-	{
-		// make sure we can
-		let	ok = await this.canUpdate(_filters, _data);
-		if (ok == false)
-			return null;
 
-		// clean up the data
-		let	realData = await this.prepareDataForUpdate(_filters, _data);
-		if (realData == null)
-			return null;
-
-		// update it
-		let	ret = await this.updateDb(_filters, realData, _addUpdatedAt);
-
-		// post update
-		if (ret == true)
-		{
-			await this.postUpdate(_filters, _data, realData);
-		}
-
-		return ret;
-	}	
 
 	async	postUpdate(_filters, _data, _updatedData)
 	{
@@ -563,31 +772,7 @@ class	AbstractModel
 		}
 	}
 
-	async	delete(_filters)
-	{
-		// make sure we can
-		let	ok = await this.canDelete(_filters);
-		if (ok == false)
-			return false;
 
-		// pre processing
-		await this.preDeleteProcessing(_filters);
-
-		// execute
-		let	ret = await this.deleteDb(_filters);
-
-		// if good we post process
-		if (ret == true)
-		{
-			// post processing
-			await this.postDeleteProcessing(_filters);
-
-			// delete from cache
-			await this.cache_delete_del(_filters);
-		}
-
-		return ret;
-	}	
 
 	async	postDeleteProcessing(_filters)
 	{
@@ -641,7 +826,10 @@ class	AbstractModel
 
 	field(_field, _alias="", _function="")
 	{
-		return PGDBMgr.Field(this.__table, _field, _alias, _function);
+		if (this.isFirestore() == true)
+			return _field;
+		else
+			return PGDBMgr.Field(this.__table, _field, _alias, _function);
 	}
 
 	conditionTimestamp(_field, _dateStr, _comparison = "=")
@@ -917,39 +1105,7 @@ class	AbstractModel
 		// override this method to do specific action when an event is triggered (from subscription)
 	}
 
-	async	insertActionToBatchWrite(_filters, _data)
-	{
-		// get the batch write info
-		let	batchInfo = ObjUtils.GetValue(_filters, "info", null);
-		if (ObjUtils.IsValid(batchInfo) == false)
-			batchInfo = this.firestoreBatch_init();
 
-		// get the type of action
-		let	action = ObjUtils.GetValueToString(_filters, "action");
-		let	filters = ObjUtils.GetValue(_data, "filters");
-
-		// depending on the action
-		// - CREATE
-		if (action == AbstractModel.ACTION_CREATE)
-		{
-			let	realData = ObjUtils.GetValue(_data, "data");
-			batchInfo = await this.firestoreBatch_create(batchInfo, filters, realData);
-		}
-		// - UPDATE
-		else if (action == AbstractModel.ACTION_UPDATE)
-		{
-			let	realData = ObjUtils.GetValue(_data, "data");
-			let	addUpdatedAt = ObjUtils.GetValueToBool(_data, "add_updated_at");
-			batchInfo = await this.firestoreBatch_update(batchInfo, filters, realData, addUpdatedAt);
-		}
-		// - DELETE
-		else if (action == AbstractModel.ACTION_DELETE)
-		{
-			batchInfo = await this.firestoreBatch_delete(batchInfo, filters);
-		}
-
-		return batchInfo;
-	}
 
 	firestoreBatch_init()
 	{

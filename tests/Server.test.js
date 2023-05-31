@@ -40,10 +40,18 @@ suite.test("ServerEndpoints", async function (context) {
 			let	tests = ObjUtils.GetValue(test, "tests");
 			for(let key in tests)
 			{
-				let	value = ObjUtils.GetValue(ret.content, key);
+				// special key?
+				if (key == "**length**")
+				{
+					context.assertEquals(tests[key], ret.content.length);
+				}
+				else
+				{
+					let	value = ObjUtils.GetValue(ret.content, key);
 
-				// same?
-				context.assertEquals(tests[key], value);
+					// same?
+					context.assertEquals(tests[key], value);
+				}
 			}
 		}
 	}
