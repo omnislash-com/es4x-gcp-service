@@ -31,7 +31,7 @@ suite.test("Service.Init", async function (context) {
 		let	service = new TestService();
 
 		// init it
-		let	ok = await service.init(appContext, env, configFolder, modelFolder);
+		let	ok = await service.init(appContext, env, configFolder, modelFolder, null);
 
 		// -> make sure it's ok!
 		context.assertEquals(ok, true);

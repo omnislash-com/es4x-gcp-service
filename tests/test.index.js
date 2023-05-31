@@ -12,11 +12,13 @@ let	service = new TestService();
 // init it
 startServer(vertx, service);
 
-
 async	function	startServer(_vertx, _service)
 {
 	_service.log("Starting service...");
 	let	env = AbstractServiceContext.VerifyEnv("local");
+
+	// create the VERTX router
+	const	mainRouter = Router.router(vertx);
 
 	// initialize the context
 	let	appContext = new TestContext(_vertx, env, false);
@@ -26,7 +28,7 @@ async	function	startServer(_vertx, _service)
 	let	modelFolder = process.cwd() + "/tests/";	
 
 	// init
-	let	ok = await _service.init(appContext, env, configFolder, modelFolder);
+	let	ok = await _service.init(appContext, env, configFolder, modelFolder, mainRouter);
 	if (ok == false)
 	{
 		_service.log('Error launching service: ' + _service.getServiceCode());
@@ -36,9 +38,6 @@ async	function	startServer(_vertx, _service)
 		let port = 8080;
 		_service.log("Launching server on port: " + port);
 		
-		// create the VERTX router
-		const	mainRouter = Router.router(vertx);
-
 		// launch the server
 		_vertx.createHttpServer()
 			.requestHandler(mainRouter)

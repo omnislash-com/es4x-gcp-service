@@ -19,7 +19,7 @@ class	AbstractService
 		this.__modelMgr = null;
 	}
 
-	async	init(_appContext, _env, _configFolder, _modelFolder)
+	async	init(_appContext, _env, _configFolder, _modelFolder, _router)
 	{
 		// read the configuration
 		try
@@ -43,7 +43,49 @@ class	AbstractService
 			}
 
 			// load the endpoints
-			//TODO
+			this.log("Loading endpoints...");
+			let	endpointsOk = this.loadEndpoints(_configFolder, _router);
+			if (endpointsOk == false)
+			{
+				this.logError("Error configuring the ENDPOINTS. Verify the file endpoints.js!");
+				return false;
+			}
+
+			return true;
+		}
+		catch(e)
+		{
+			console.trace(e);
+			return false;
+		}
+	}
+
+	loadEndpoints(_configFolder, _router)
+	{
+		// no router?
+		if (_router == null)
+		{
+			this.logWarning("No router set to configure the endpoints!");
+			return true;
+		}
+
+		// read the configuration file with all the endpoints
+		try
+		{
+			let	endpointConfig = require(_configFolder + "endpoints.js");
+
+			// set it up
+			let	ret = this.configureEndpoints(endpointConfig, _router);
+
+			// no endpoint configured?
+			if ( (ret.forward == 0) && (ret.internal == 0) )
+			{
+				this.logWarning("No endpoint configured!");
+			}
+			else
+			{
+				this.log("We configured " + ret.internal + " internal endpoint(s) and " + ret.forward + " forwarding endpoint(s).");
+			}
 
 			return true;
 		}
@@ -296,8 +338,9 @@ class	AbstractService
 			await this.executeEndpointTaskCallback(ctx);
 		});
 
-
 		// go through all the services
+		let	countForward = 0;
+		let	countInternal = 0;
 		for(const service in _endpoints)
 		{
 			// are we this service?
@@ -329,6 +372,7 @@ class	AbstractService
 							// active? we execute it
 							if (serviceActive == true)
 							{
+								countInternal++;
 								_router.get(path).handler(async ctx => {
 									await this.executeEndpoint(ctx, model, action, actionParams, authRequirements);
 								});
@@ -336,6 +380,7 @@ class	AbstractService
 							// forward
 							else
 							{
+								countForward++;
 								_router.get(path).handler(async ctx => {
 									await this.processForwarding(ctx, service, authRequirements, postProcessing, preProcessing, cachePostProcessing);
 								});
@@ -347,6 +392,7 @@ class	AbstractService
 							// active? we execute it
 							if (serviceActive == true)
 							{
+								countInternal++;
 								_router.post(path).handler(async ctx => {
 									await this.executeEndpoint(ctx, model, action, actionParams, authRequirements);
 								});
@@ -354,6 +400,7 @@ class	AbstractService
 							// forward
 							else
 							{
+								countForward++;
 								_router.post(path).handler(async ctx => {
 									await this.processForwarding(ctx, service, authRequirements, postProcessing, preProcessing, cachePostProcessing);
 								});
@@ -365,6 +412,7 @@ class	AbstractService
 							// active? we execute it
 							if (serviceActive == true)
 							{
+								countInternal++;
 								_router.put(path).handler(async ctx => {
 									await this.executeEndpoint(ctx, model, action, actionParams, authRequirements);
 								});
@@ -372,6 +420,7 @@ class	AbstractService
 							// forward
 							else
 							{
+								countForward++;
 								_router.put(path).handler(async ctx => {
 									await this.processForwarding(ctx, service, authRequirements, postProcessing, preProcessing, cachePostProcessing);
 								});
@@ -383,6 +432,7 @@ class	AbstractService
 							// active? we execute it
 							if (serviceActive == true)
 							{
+								countInternal++;
 								_router.delete(path).handler(async ctx => {
 									await this.executeEndpoint(ctx, model, action, actionParams, authRequirements);
 								});
@@ -390,6 +440,7 @@ class	AbstractService
 							// forward
 							else
 							{
+								countForward++;
 								_router.delete(path).handler(async ctx => {
 									await this.processForwarding(ctx, service, authRequirements, postProcessing, preProcessing, cachePostProcessing);
 								});
@@ -398,7 +449,12 @@ class	AbstractService
 					}
 				}
 			}
-		}		
+		}
+
+		return {
+			internal: countInternal,
+			forward: countForward
+		};
 	}
 
 	async	processForwarding(_ctx, _service, _authRequirements, _postProcessing, _preProcessing, _cachePostProcessing)
