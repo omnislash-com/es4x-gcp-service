@@ -1,49 +1,16 @@
 /// <reference types="es4x" />
 // @ts-check
-import { Router } from '@vertx/web';
 
-import { TestService } from './TestService';
-import { TestContext } from './TestContext';
-import { AbstractServiceContext } from '../src/service/AbstractServiceContext';
+import { TestService } from './service/TestService';
+import { TestContext } from './service/TestContext';
+
+// determine the path to the config folder
+let	configFolder = process.cwd() + "/tests/service/config/";
+let	modelFolder = process.cwd() + "/tests/service/";	
 
 // create the service
 let	service = new TestService();
+let	appContext = new TestContext(vertx, "local", false);
 
 // init it
-startServer(vertx, service);
-
-async	function	startServer(_vertx, _service)
-{
-	_service.log("Starting service...");
-	let	env = AbstractServiceContext.VerifyEnv("local");
-
-	// create the VERTX router
-	const	mainRouter = Router.router(vertx);
-
-	// initialize the context
-	let	appContext = new TestContext(_vertx, env, false);
-	
-	// determine the path to the config folder
-	let	configFolder = process.cwd() + "/tests/config/";
-	let	modelFolder = process.cwd() + "/tests/";	
-
-	// init
-	let	ok = await _service.init(appContext, env, configFolder, modelFolder, mainRouter);
-	if (ok == false)
-	{
-		_service.log('Error launching service: ' + _service.getServiceCode());
-	}
-	else
-	{
-		let port = 8080;
-		_service.log("Launching server on port: " + port);
-		
-		// launch the server
-		_vertx.createHttpServer()
-			.requestHandler(mainRouter)
-			.listen(port);
-		
-		_service.log("SERVICE '" + _service.getServiceCode() + "' is now listening at: http://localhost:" + port + "/");	
-	}
-}
-
+TestService.StartServer(vertx, service, appContext, configFolder, modelFolder);

@@ -36,11 +36,11 @@ class	AbstractServiceContext
 	constructor(_vertx, _env, _isAdmin = false)
 	{
 		this.__vertx = _vertx;
-		this.__env = _env;
+		this.__env = AbstractServiceContext.VerifyEnv(_env);
 		this.__isAdmin = _isAdmin;
 
 		// load all the services
-		this.__serviceHosts = this.getServicesHostConfig(_env);
+		this.__serviceHosts = this.getServicesHostConfig(this.__env);
 
 		// config
 		this.__config = null;

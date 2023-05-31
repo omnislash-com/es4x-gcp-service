@@ -1,4 +1,4 @@
-import { AbstractService } from '../src/service/AbstractService';
+import { AbstractService } from '../../src/service/AbstractService';
 
 
 class	TestService	extends	AbstractService

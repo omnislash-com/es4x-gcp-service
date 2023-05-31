@@ -1,3 +1,5 @@
+import { Router } from '@vertx/web';
+
 import { AbstractModel } from '../model/AbstractModel';
 import { ModelMgr } from '../model/ModelMgr';
 
@@ -19,7 +21,34 @@ class	AbstractService
 		this.__modelMgr = null;
 	}
 
-	async	init(_appContext, _env, _configFolder, _modelFolder, _router)
+	static	async	StartServer(_vertx, _service, _appContext, _configFolder, _modelFolder)
+	{
+		_service.log("Starting service...");
+	
+		// create the VERTX router
+		const	mainRouter = Router.router(_vertx);
+			
+		// init
+		let	ok = await _service.init(_appContext, _configFolder, _modelFolder, mainRouter);
+		if (ok == false)
+		{
+			_service.log('Error launching service: ' + _service.getServiceCode());
+		}
+		else
+		{
+			let port = 8080;
+			_service.log("Launching server on port: " + port);
+			
+			// launch the server
+			_vertx.createHttpServer()
+				.requestHandler(mainRouter)
+				.listen(port);
+			
+			_service.log("SERVICE '" + _service.getServiceCode() + "' is now listening at: http://localhost:" + port + "/");	
+		}
+	}
+
+	async	init(_appContext, _configFolder, _modelFolder, _router)
 	{
 		// read the configuration
 		try
@@ -29,16 +58,16 @@ class	AbstractService
 			let	serviceOk = this.loadConfigService(_configFolder, _modelFolder);
 			if (serviceOk == false)
 			{
-				this.logError("Error loading the SERVICE configuration. Verify the file config.service.js!");
+				this.logError("Error loading the SERVICE configuration. Verify the file service.js!");
 				return false;
 			}
 
 			// load the context
 			this.log("Loading context...");
-			let	contextOk = await this.loadContext(_appContext, _env, _configFolder);
+			let	contextOk = await this.loadContext(_appContext, _configFolder);
 			if (contextOk == false)
 			{
-				this.logError("Error loading the CONTEXT. Verify the file config." + _env + ".js!");
+				this.logError("Error loading the CONTEXT. Verify the file config.js!");
 				return false;
 			}
 
@@ -99,7 +128,7 @@ class	AbstractService
 	loadConfigService(_configFolder, _modelFolder)
 	{
 		// load the config
-		let	serviceConfig = require(_configFolder + "config.service.js");
+		let	serviceConfig = require(_configFolder + "service.js");
 
 		// save the service code
 		this.__code = ObjUtils.GetValueToString(serviceConfig, "service");
@@ -122,13 +151,13 @@ class	AbstractService
 		return true;
 	}
 
-	async	loadContext(_appContext, _env, _configFolder)
+	async	loadContext(_appContext, _configFolder)
 	{
 		// save the context
 		this.__context = _appContext;
 
 		// load the configuration
-		let	contextConfig = require(_configFolder + "config." + _env + ".js");
+		let	contextConfig = require(_configFolder + "config.js");
 
 		// init the context
 		let	contextOk = await this.__context.init(this, contextConfig);

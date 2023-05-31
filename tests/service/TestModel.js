@@ -1,4 +1,4 @@
-import { AbstractModel } from '../src/model/AbstractModel';
+import { AbstractModel } from '../../src/model/AbstractModel';
 
 
 class	TestModel	extends	AbstractModel

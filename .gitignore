@@ -134,3 +134,6 @@ dist
 
 # internal
 test_config.json
+config.js
+endpoints.js
+service.js

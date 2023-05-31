@@ -1,4 +1,4 @@
-import { AbstractServiceContext } from '../src/service/AbstractServiceContext';
+import { AbstractServiceContext } from '../../src/service/AbstractServiceContext';
 
 
 class	TestContext	extends	AbstractServiceContext

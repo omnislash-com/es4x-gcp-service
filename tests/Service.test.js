@@ -3,10 +3,8 @@
 import { TestSuite } from '@vertx/unit';
 import { ObjUtils } from 'es4x-utils/src/utils/ObjUtils';
 
-import { AbstractServiceContext } from '../src/service/AbstractServiceContext';
-
-import { TestService } from './TestService';
-import { TestContext } from './TestContext';
+import { TestService } from './service/TestService';
+import { TestContext } from './service/TestContext';
 
 const suite = TestSuite.create("ES4X Test: Service");
 const	config = require('./test_config.json');
@@ -18,20 +16,18 @@ suite.test("Service.Init", async function (context) {
 
 	try
 	{
-		let	env = AbstractServiceContext.VerifyEnv("local");
-
 		// initialize the context
-		let	appContext = new TestContext(vertx, env, false);
+		let	appContext = new TestContext(vertx, "local", false);
 
 		// determine the path to the config folder
-		let	configFolder = process.cwd() + "/tests/config/";
-		let	modelFolder = process.cwd() + "/tests/";
-
+		let	configFolder = process.cwd() + "/tests/service/config/";
+		let	modelFolder = process.cwd() + "/tests/service/";	
+		
 		// create the service
 		let	service = new TestService();
 
 		// init it
-		let	ok = await service.init(appContext, env, configFolder, modelFolder, null);
+		let	ok = await service.init(appContext, configFolder, modelFolder, null);
 
 		// -> make sure it's ok!
 		context.assertEquals(ok, true);
