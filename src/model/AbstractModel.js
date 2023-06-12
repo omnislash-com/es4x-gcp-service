@@ -181,12 +181,28 @@ class	AbstractModel
 		throw new Error("Abstract Method has no implementation");
 	}	
 
+	async	readRawById(_id)
+	{
+		return await this.read({id: _id, raw: true});
+	}
+
+	async	readRawByCode(_id)
+	{
+		return await this.read({code: _id, raw: true});
+	}
+
 	async	read(_filters)
 	{
+		// read raw?
+		let	useRaw = ObjUtils.GetValueToBool(_filters, "raw");
+
 		// look in the cache first
-		let	resultFromCache = await this.cache_read_get(_filters);
-		if (resultFromCache != null)
-			return resultFromCache;
+		if (useRaw == false)
+		{
+			let	resultFromCache = await this.cache_read_get(_filters);
+			if (resultFromCache != null)
+				return resultFromCache;
+		}
 
 		// read from the database
 		let	result = await this.readDb(_filters);
@@ -194,6 +210,10 @@ class	AbstractModel
 		// handle null result
 		if (result == null)
 			result = await this.handleReadNullResult(_filters);
+
+		// raw?
+		if (useRaw == true)
+			return result;
 
 		// if we have something, we do some postread processing
 		if (result != null)
