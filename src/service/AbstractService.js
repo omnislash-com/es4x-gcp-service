@@ -334,8 +334,7 @@ class	AbstractService
 		// get the params and the post data
 		let	allFilters = _query.getPathAndQueryParams();
 		let	data = _query.postParams();
-console.log("HERE DATA=");
-console.log(data);
+
 		// execute
 		return await this.doOnModel(_model, _action, allFilters, data);
 	}
