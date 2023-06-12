@@ -1,4 +1,4 @@
-import { Router } from '@vertx/web';
+import { BodyHandler, Router } from '@vertx/web';
 
 import { AbstractModel } from '../model/AbstractModel';
 import { ModelMgr } from '../model/ModelMgr';
@@ -28,6 +28,9 @@ class	AbstractService
 		// create the VERTX router
 		const	mainRouter = Router.router(_vertx);
 			
+		// make sure we accept the body
+		mainRouter.route().handler(BodyHandler.create());
+
 		// init
 		let	ok = await _service.init(_appContext, _configFolder, _modelFolder, mainRouter);
 		if (ok == false)
