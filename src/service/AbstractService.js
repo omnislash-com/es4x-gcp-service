@@ -1,4 +1,5 @@
-import { BodyHandler, Router } from '@vertx/web';
+import { BodyHandler, Router, CorsHandler } from '@vertx/web';
+import { HttpMethod } from '@vertx/core/options';
 
 import { AbstractModel } from '../model/AbstractModel';
 import { ModelMgr } from '../model/ModelMgr';
@@ -21,13 +22,33 @@ class	AbstractService
 		this.__modelMgr = null;
 	}
 
-	static	async	StartServer(_vertx, _service, _appContext, _configFolder, _modelFolder)
+	static	async	StartServer(_vertx, _service, _appContext, _configFolder, _modelFolder, _isAPI = false)
 	{
 		_service.log("Starting service...");
 	
 		// create the VERTX router
 		const	mainRouter = Router.router(_vertx);
-			
+
+		// API? we open everything with CORS
+		if (_isAPI == true)
+		{
+			mainRouter.route().handler(CorsHandler.create("*")
+			.allowedMethod(HttpMethod.GET)
+			.allowedMethod(HttpMethod.POST)
+			.allowedMethod(HttpMethod.OPTIONS)
+			.allowedMethod(HttpMethod.DELETE)
+			.allowedMethod(HttpMethod.PATCH)
+			.allowedMethod(HttpMethod.PUT)
+			.allowedHeader("Content-Type")
+			.allowedHeader("Authorization")
+			.allowedHeader("Access-Control-Allow-Origin")
+			.allowedHeader("Cache-Control")
+			.allowedHeader("Access-Control-Allow-Credentials")
+			.allowedHeader("Access-Control-Request-Method")
+			.allowedHeader("Access-Control-Allow-Headers")
+			.allowCredentials(true));
+		}
+
 		// make sure we accept the body
 		mainRouter.route().handler(BodyHandler.create());
 
