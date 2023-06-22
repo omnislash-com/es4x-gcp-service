@@ -195,7 +195,7 @@ class	AbstractModel
 		let	items = await this.queryFromConditionsToList(tables, conditions, fields);
 
 		// post process them
-		finalItems = await this.postReadProcessingList(items, _filters);
+		let	finalItems = await this.postReadProcessingList(items, _filters);
 
 		// convert it to a dictionary
 		let	itemsDict = ObjUtils.ArrayToDictionary(finalItems, "id");
