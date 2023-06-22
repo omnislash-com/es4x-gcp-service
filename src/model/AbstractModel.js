@@ -549,9 +549,15 @@ class	AbstractModel
 		if (options.includes(value) == false)
 			value = options[0];
 		
+		// contains desc?
+		if (value.endsWith("_desc") == true)
+		{
+			value = "-" + value.replace("_desc", "");
+		}
+
 		// return it
 		return [
-			this.field(value)
+			value
 		];
 	}
 
