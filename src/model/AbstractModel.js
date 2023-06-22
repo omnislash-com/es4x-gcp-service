@@ -179,7 +179,7 @@ class	AbstractModel
 	async	listBatch(_filters, _data)
 	{
 		// empty?
-		if (ObjUtils.IsArrayEmpty(_data["ids"]) == true)
+		if (ArrayUtils.IsEmpty(_data["ids"]) == true)
 			return {};
 
 		// build the query
