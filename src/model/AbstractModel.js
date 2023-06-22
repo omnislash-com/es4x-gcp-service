@@ -176,6 +176,15 @@ class	AbstractModel
 		return await this.postReadProcessingList(rows, _filters);
 	}	
 
+	getConditionsForListBatch(_filters, _data)
+	{
+		let	conditions = [
+			this.field("id") + "IN$" + _data["ids"].join(" | ")
+		];
+
+		return conditions;
+	}
+
 	async	listBatch(_filters, _data)
 	{
 		// empty?
@@ -187,9 +196,7 @@ class	AbstractModel
 		let	fields = this.getFields();
 
 		// add the list of ids in it
-		let	conditions = [
-			this.field("id") + "IN$" + _data["ids"].join(" | ")
-		];
+		let	conditions = this.getConditionsForListBatch(_filters, _data);
 
 		// execute
 		let	items = await this.queryFromConditionsToList(tables, conditions, fields);
