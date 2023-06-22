@@ -178,7 +178,29 @@ class	AbstractModel
 
 	async	listBatch(_filters, _data)
 	{
-		throw new Error("Abstract Method has no implementation");
+		// empty?
+		if (ObjUtils.IsArrayEmpty(_data["ids"]) == true)
+			return {};
+
+		// build the query
+		let	tables = this.getTables();
+		let	fields = this.getFields();
+
+		// add the list of ids in it
+		let	conditions = [
+			this.field("id") + "IN$" + _data["ids"].join(" | ")
+		];
+
+		// execute
+		let	items = await this.queryFromConditionsToList(tables, conditions, fields);
+
+		// post process them
+		finalItems = await this.postReadProcessingList(items, _filters);
+
+		// convert it to a dictionary
+		let	itemsDict = ObjUtils.ArrayToDictionary(finalItems, "id");
+
+		return itemsDict;
 	}	
 
 	async	readRawById(_id)
