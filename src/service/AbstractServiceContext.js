@@ -144,6 +144,12 @@ class	AbstractServiceContext
 		return "";
 	}
 
+	getTaskProcessorPathToProcessTask()
+	{
+		// override and return the path of the service that processes tasks
+		return "";
+	}
+
 	getTaskProcessorPath()
 	{
 		// override and return the path of the service that processes tasks
@@ -303,6 +309,32 @@ class	AbstractServiceContext
 			LogUtils.LogError("Error: no task processor service has been configured!");
 			return 500;
 		}
+	}
+
+	async	processEventRemotely(_event)
+	{
+		let	taskProcessorService = this.getTaskProcessorService();
+		let	taskProcessorPath = this.getTaskProcessorPathToProcessTask();
+
+		if ( (StringUtils.IsEmpty(taskProcessorService) == true) || (StringUtils.IsEmpty(taskProcessorPath) == true) )
+		{
+			LogUtils.LogError("Error: no task processor service has been configured!");
+			return 500;
+		}
+
+		// we are now creating a TASK on the task processor to publish the event and forward it to the listeners
+		let	queue = "task-processor-events";
+		let	payload = {
+			"model": "taskprocessor_event",
+			"action": "publish_event",
+			"data": _event
+		};
+
+		this.log("Publishing event to pub sub (NEW TASK PROCESSOR)...", payload);
+		let	ret = await this.createGoogleTask(taskProcessorService, taskProcessorPath, payload, 0, queue);
+		this.log("PubSub publish result: " + ret);
+
+		return ret;
 	}
 
 	async	createGoogleTask(_service, _path, _payload, _delaySec = 0, _queue = "")

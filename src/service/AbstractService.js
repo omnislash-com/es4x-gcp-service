@@ -789,17 +789,7 @@ class	AbstractService
 
 	async	processEventRemotely(_event)
 	{
-		// we are now creating a TASK on the task processor to publish the event and forward it to the listeners
-		let	queue = "task-processor-events";
-		let	payload = {
-			"model": "taskprocessor_event",
-			"action": "publish_event",
-			"data": _event
-		};
-
-		this.log("Publishing event to pub sub (NEW TASK PROCESSOR)...", payload);
-		let	ret = await this.getContext().createGoogleTask(AppContext.SERVICE_TASK_PROCESSOR, "/task/process", payload, 0, queue);
-		this.log("PubSub publish result: " + ret);
+		return await this.getContext().processEventRemotely(_event);
 	}
 
 	createEventCode(_model, _event, _service = "")
