@@ -21,6 +21,8 @@ class	AbstractModel
 	static	get	DATASOURCE_PGSQL()			{	return "pgsql";	}
 	static	get	DATASOURCE_FIRESTORE()		{	return "firestore";	}
 
+	static	get	NO_LIMIT()					{	return -1000;	}
+
 	constructor(_service, _config)
 	{
 		// save the service
@@ -543,7 +545,11 @@ class	AbstractModel
 		{
 			// limit
 			limit = ObjUtils.GetValueToInt(_filters, "limit", this.__paginationSize);
-			if (limit <= 0)
+
+			// no limit
+			if (limit == AbstractModel.NO_LIMIT)
+				return 0;
+			else if (limit <= 0)
 				limit = this.__paginationSize;
 		}
 		return limit;
@@ -1247,6 +1253,24 @@ class	AbstractModel
 		let	statusCode = await this.getGoogleApi().firestore_batchWrite(_batchInfo);
 		return statusCode == 200;
 	}
+
+	async	populate(_list, _type, _fieldId, _fieldTarget)
+	{
+		// build the list of ids
+		let	ids = ObjUtils.GetValueRecursive(_list, _fieldId);
+
+		// get them
+		if (ids.length > 0)
+		{
+			// get them
+			let	infoDict = await this.doOnModel(_type, AbstractModel.ACTION_LIST_BATCH, {}, {ids: ids});
+
+			// replace them
+			_list = ObjUtils.ReplaceValueRecursive(_list, _fieldId, infoDict, _fieldTarget, null, -1);
+		}
+
+		return _list;
+	}	
 }
 
 module.exports = {

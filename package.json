@@ -1,7 +1,7 @@
 {
 	"name": "es4x-gcp-service",
 	"displayName": "ES4X PostgreSQL SDK",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "Interface classes to build a service within a micro-services architecture on GCP using ES4X runtime.",
 	"main": "index.js",
 	"keywords": ["es4x", "javascript", "vertex", "microservice", "gcp"],
