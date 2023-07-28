@@ -57,6 +57,11 @@ class	AbstractServiceContext
 		this.__mainService = null;
 	}
 
+	getVertx()
+	{
+		return this.__vertx;
+	}
+
 	getIsLocal()
 	{
 		return this.__env == AbstractServiceContext.ENV_LOCAL;

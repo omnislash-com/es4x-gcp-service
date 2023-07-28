@@ -22,6 +22,14 @@ class	AbstractService
 		this.__modelMgr = null;
 	}
 
+	getVertx()
+	{
+		if (this.__context != null)
+			return this.__context.getVertx();
+		else
+			return null;
+	}
+
 	static	async	StartServer(_vertx, _service, _appContext, _configFolder, _modelFolder, _isAPI = false)
 	{
 		_service.log("Starting service...");
