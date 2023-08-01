@@ -355,7 +355,7 @@ class	AbstractService
 
 	isAdmin(_filters)
 	{
-		return this.getContext().filtersContainAdminKey(_filters);
+		return this.getContext().filtersCo_query_queryntainAdminKey(_filters);
 	}
 
 	async	do(_query, _model, _action)
@@ -363,13 +363,12 @@ class	AbstractService
 		// get the params and the post data
 		let	allFilters = _query.getPathAndQueryParams();
 		let	data = _query.postParams();
-		let	headers = _query.getHeaders();
 
 		// execute
-		return await this.doOnModel(_model, _action, allFilters, data, null, headers);
+		return await this.doOnModel(_model, _action, allFilters, data, null, _query);
 	}
 
-	async	doOnModel(_model, _action, _filters, _data = null, _callbackData = null, _headers = null)
+	async	doOnModel(_model, _action, _filters, _data = null, _callbackData = null, _query = null)
 	{
 		// find the model
 		let	model = this.__modelMgr.getModel(_model);
@@ -380,7 +379,7 @@ class	AbstractService
 		}
 
 		// execute the action
-		return await model.do(_action, _filters, _data, _callbackData, _headers);
+		return await model.do(_action, _filters, _data, _callbackData, _query);
 	}
 
 	configureEndpoints(_endpoints, _router)

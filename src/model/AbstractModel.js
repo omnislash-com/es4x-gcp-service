@@ -121,7 +121,7 @@ class	AbstractModel
 
 
 
-	async	do(_action, _filters, _data, _callbackData = null, _headers = null)
+	async	do(_action, _filters, _data, _callbackData = null, _query = null)
 	{
 		// depending on the method
 		// LIST?
@@ -166,7 +166,7 @@ class	AbstractModel
 		}
 		// CUSTOM
 		else
-			return await this.doCustom(_action, _filters, _data, _callbackData, _headers);
+			return await this.doCustom(_action, _filters, _data, _callbackData, _query);
 	}	
 
 	async	list(_filters)
@@ -361,7 +361,7 @@ class	AbstractModel
 	}
 
 	// Override that method to process custom actions
-	async	doCustom(_action, _filters, _data, _callbackData=null, _headers=null)
+	async	doCustom(_action, _filters, _data, _callbackData=null, _query=null)
 	{
 		return null;
 	}
