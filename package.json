@@ -4,7 +4,13 @@
 	"version": "0.1.3",
 	"description": "Interface classes to build a service within a micro-services architecture on GCP using ES4X runtime.",
 	"main": "index.js",
-	"keywords": ["es4x", "javascript", "vertex", "microservice", "gcp"],
+	"keywords": [
+		"es4x",
+		"javascript",
+		"vertex",
+		"microservice",
+		"gcp"
+	],
 	"author": {
 		"name": "Michael Jegat (Omnislash)",
 		"email": "michael@omnislash.com",
@@ -13,10 +19,10 @@
 	"dependencies": {
 		"@vertx/core": "4.1.0",
 		"@vertx/pg-client": "4.2.5",
-		"es4x-utils": "git+https://github.com/omnislash-com/es4x-utils.git#main",
 		"es4x-cache": "git+https://github.com/omnislash-com/es4x-cache.git#main",
 		"es4x-sdk-gcp": "git+https://github.com/omnislash-com/es4x-sdk-gcp.git#main",
-		"es4x-sdk-pgsql": "git+https://github.com/omnislash-com/es4x-sdk-pgsql.git#main"
+		"es4x-sdk-pgsql": "git+https://github.com/omnislash-com/es4x-sdk-pgsql.git#main",
+		"es4x-utils": "github:omnislash-com/es4x-utils#main"
 	},
 	"devDependencies": {
 		"@es4x/create": "0.14.0",
@@ -30,6 +36,7 @@
 		"start": "es4x",
 		"test:Service": "es4x test tests/Service.test.js",
 		"test:ServerStart": "es4x tests/test.index.js",
-		"test:Server": "es4x test tests/Server.test.js"
+		"test:Server": "es4x test tests/Server.test.js",
+		"update:helpers": "npm install git+https://github.com/omnislash-com/es4x-utils.git#main"
 	}
 }

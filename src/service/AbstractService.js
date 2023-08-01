@@ -363,12 +363,13 @@ class	AbstractService
 		// get the params and the post data
 		let	allFilters = _query.getPathAndQueryParams();
 		let	data = _query.postParams();
+		let	headers = _query.getHeaders();
 
 		// execute
-		return await this.doOnModel(_model, _action, allFilters, data);
+		return await this.doOnModel(_model, _action, allFilters, data, null, headers);
 	}
 
-	async	doOnModel(_model, _action, _filters, _data = null, _callbackData = null)
+	async	doOnModel(_model, _action, _filters, _data = null, _callbackData = null, _headers = null)
 	{
 		// find the model
 		let	model = this.__modelMgr.getModel(_model);
@@ -379,7 +380,7 @@ class	AbstractService
 		}
 
 		// execute the action
-		return await model.do(_action, _filters, _data, _callbackData);
+		return await model.do(_action, _filters, _data, _callbackData, _headers);
 	}
 
 	configureEndpoints(_endpoints, _router)
