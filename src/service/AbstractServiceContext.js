@@ -335,9 +335,9 @@ class	AbstractServiceContext
 			"data": _event
 		};
 
-		this.log("Publishing event to pub sub (NEW TASK PROCESSOR)...", payload);
+		LogUtils.Log("Publishing event to pub sub (NEW TASK PROCESSOR)...", payload);
 		let	ret = await this.createGoogleTask(taskProcessorService, taskProcessorPath, payload, 0, queue);
-		this.log("PubSub publish result: " + ret);
+		LogUtils.Log("PubSub publish result: " + ret);
 
 		return ret;
 	}
