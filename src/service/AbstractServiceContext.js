@@ -1297,6 +1297,21 @@ class	AbstractServiceContext
 
 		return value;
 	}
+
+	async	doOnModelRemote(_service, _model, _action, _filters, _data)
+	{
+		// we're going to execute the process
+		let	path = "/task/process";
+		let	payload = {
+			model: _model,
+			action: _action,
+			filters: _filters,
+			data: _data
+		};
+
+		// call the endpoint
+		return await this.postFromServiceToJson(_service, path, payload);
+	}	
 }
 
 module.exports = {

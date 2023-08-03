@@ -461,7 +461,10 @@ class	AbstractModel
 
 
 
-
+	async	doOnModelRemote(_service, _model, _action, _filters, _data)
+	{
+		return await this.getService().doOnModelRemote(_service, _model, _action, _filters, _data);
+	}
 
 	log(_message, _payload = null)
 	{

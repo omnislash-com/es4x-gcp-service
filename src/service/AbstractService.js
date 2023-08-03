@@ -854,6 +854,11 @@ class	AbstractService
 	{
 		return await this.getContext().getFromHostToJson(_host, _path, _queryParams, _port, _headers);
 	}
+
+	async	doOnModelRemote(_service, _model, _action, _filters, _data)
+	{
+		return await this.getContext().doOnModelRemote(_service, _model, _action, _filters, _data);
+	}
 }
 
 module.exports = {
