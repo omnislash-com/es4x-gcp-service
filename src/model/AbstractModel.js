@@ -85,7 +85,10 @@ class	AbstractModel
 		throw new Error("Abstract Method has no implementation");
 	}
 
-
+	async	createTask(_service, _model, _action, _filters = {}, _data = {}, _callbackInfo = null, _delaySec = 0, _priority = 1)
+	{
+		return await this.getService().createTaskProcess(_service, _model, _action, _filters, _data, _callbackInfo, _delaySec, _priority);
+	}	
 
 
 	getConfig(_key, _default = null)
