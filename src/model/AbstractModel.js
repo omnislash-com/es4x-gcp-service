@@ -255,9 +255,14 @@ class	AbstractModel
 			// post process it
 			result = await this.postReadProcessing(result, _filters);
 
-			// save it in the cache?
-			await this.cache_read_set(result, _filters);
+			// handle null result
+			if (result == null)
+				result = await this.handleReadNullResult(_filters);
 		}
+
+		// save it in the cache?
+		if (result != null)
+			await this.cache_read_set(result, _filters);
 
 		return result;	
 	}
