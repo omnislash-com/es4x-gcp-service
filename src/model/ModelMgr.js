@@ -29,7 +29,8 @@ class	ModelMgr
 			try
 			{
 				let	modelClass = require(_modelFolder + classFile);
-
+console.log(this.__service);
+console.log(_config);
 				// now create an instance of it
 				let	modelInstance = new modelClass(this.__service, _config);
 	
