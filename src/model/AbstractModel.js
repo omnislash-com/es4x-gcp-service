@@ -275,8 +275,16 @@ class	AbstractModel
 			return null;
 
 		// insert and return the object
-		return await this.createDb(realData);
+		let	newItem = await this.createDb(realData);
+
+		// post processing
+		return await this.postCreateProcessing(newItem, _filters, _data);
 	}	
+
+	async	postCreateProcessing(_newItem, _filters, _data)
+	{
+		return _newItem;
+	}
 
 	async	createBatch(_filters, _data)
 	{
