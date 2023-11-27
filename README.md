@@ -1,3 +1,12 @@
+# Set up environment
+## Install JAVA Openjdk@11
+```bash
+curl -C - https://download.java.net/java/ga/jdk11/openjdk-11_osx-x64_bin.tar.gz -O openjdk-11_osx-x64_bin.tar.gz
+tar xf openjdk-11_osx-x64_bin.tar.gz
+sudo mv jdk-11.jdk /Library/Java/JavaVirtualMachines/
+java -version
+echo export "JAVA_HOME=\$(/usr/libexec/java_home)" >> ~/.zshrc
+```
 
 # Introduction
 This library offers a SDK for PostgreSQL for the [ES4X Runtime](https://github.com/reactiverse/es4x).
