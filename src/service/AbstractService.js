@@ -95,7 +95,7 @@ class	AbstractService
 			}
 
 			// load the context
-			this.log("Loading context...");
+			this.log("Loading context with env=" + _appContext.getEnv() + "...");
 			let	contextOk = await this.loadContext(_appContext, _configFolder);
 			if (contextOk == false)
 			{

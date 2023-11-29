@@ -67,6 +67,11 @@ class	AbstractServiceContext
 		return this.__env == AbstractServiceContext.ENV_LOCAL;
 	}
 
+	getEnv()
+	{
+		return this.__env;
+	}
+
 	static	VerifyEnv(_env)
 	{
 		// empty?
