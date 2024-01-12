@@ -434,9 +434,8 @@ class	AbstractService
 							if (serviceActive == true)
 							{
 								countInternal++;
-								console.log({postProcessing});
+
 								_router.get(path).handler(async ctx => {
-									console.log({postProcessing});
 									await this.executeEndpoint(ctx, model, action, actionParams, authRequirements, postProcessing, cachePostProcessing);
 								});
 							}
@@ -679,7 +678,7 @@ class	AbstractService
 
 	async	executeEndpoint(_ctx, _model, _action, _actionParams = null, _authRequirements = null, _postProcessing = null, _cachePostProcessing = [])
 	{
-		console.log({_model, _action, _actionParams, _authRequirements, _postProcessing, _cachePostProcessing})
+
 		let	query = QueryUtils.create(_ctx);
 		try
 		{
