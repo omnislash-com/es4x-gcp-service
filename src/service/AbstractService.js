@@ -693,7 +693,7 @@ class	AbstractService
 				result = await this.getContext().postProcessResult(result, _postProcessing, filters, bodyParams, authUserId);
 
 				// cache post processing
-				await this.cachePostProcessing(_cachePostProcessing, filters, bodyParams, result, authUserId);	
+				await this.getContext().cachePostProcessing(_cachePostProcessing, filters, bodyParams, result, authUserId);	
 			}
 
 			// response depending on the type of action
