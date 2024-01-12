@@ -423,7 +423,6 @@ class	AbstractService
 						let	authRequirements = ObjUtils.GetValue(actions[j], "auth", null);
 						let	httpMethodOverride = ObjUtils.GetValue(actions[j], "http_method", "").toLowerCase();
 						let	postProcessing = _isAPI ? ObjUtils.GetValue(actions[j], "post_processing", null) : null;
-						console.log({postProcessing})
 						let	preProcessing = ObjUtils.GetValue(actions[j], "pre_processing", null);
 						let	cachePostProcessing = _isAPI ? ObjUtils.GetValue(actions[j], "cache_post_processing", []) : [];
 						let	actionParams = ObjUtils.GetValue(actions[j], "action_params", null);
@@ -435,7 +434,9 @@ class	AbstractService
 							if (serviceActive == true)
 							{
 								countInternal++;
+								console.log({postProcessing});
 								_router.get(path).handler(async ctx => {
+									console.log({postProcessing});
 									await this.executeEndpoint(ctx, model, action, actionParams, authRequirements, postProcessing, cachePostProcessing);
 								});
 							}
