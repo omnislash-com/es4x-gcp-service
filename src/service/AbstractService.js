@@ -678,6 +678,7 @@ class	AbstractService
 
 	async	executeEndpoint(_ctx, _model, _action, _actionParams = null, _authRequirements = null, _postProcessing = null, _cachePostProcessing = [])
 	{
+		console.log({_model, _action, _actionParams, _authRequirements, _postProcessing, _cachePostProcessing})
 		let	query = QueryUtils.create(_ctx);
 		try
 		{
@@ -690,8 +691,8 @@ class	AbstractService
 				let	filters = query.getPathAndQueryParams();
 				let	bodyParams = query.postParams();
 				let authUserId = this.getAuthUserId();
-				console.log("post processing result")
-				console.log(_postProcessing)
+				console.log("post processing result");
+				console.log(_postProcessing);
 				result = await this.getContext().postProcessResult(result, _postProcessing, filters, bodyParams, authUserId);
 
 				// cache post processing
