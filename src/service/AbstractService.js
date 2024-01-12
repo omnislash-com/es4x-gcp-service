@@ -675,7 +675,7 @@ class	AbstractService
 		}
 	}
 
-	async	executeEndpoint(_ctx, _model, _action, _actionParams = null, _authRequirements = null, _postProcessing = null, )
+	async	executeEndpoint(_ctx, _model, _action, _actionParams = null, _authRequirements = null, _postProcessing = null, _cachePostProcessing = [])
 	{
 		let	query = QueryUtils.create(_ctx);
 		try
