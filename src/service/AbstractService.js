@@ -61,7 +61,7 @@ class	AbstractService
 		mainRouter.route().handler(BodyHandler.create());
 
 		// init
-		let	ok = await _service.init(_appContext, _configFolder, _modelFolder, mainRouter);
+		let	ok = await _service.init(_appContext, _configFolder, _modelFolder, mainRouter, _isAPI);
 		if (ok == false)
 		{
 			_service.log('Error launching service: ' + _service.getServiceCode());
@@ -80,7 +80,7 @@ class	AbstractService
 		}
 	}
 
-	async	init(_appContext, _configFolder, _modelFolder, _router)
+	async	init(_appContext, _configFolder, _modelFolder, _router, _isAPI = false)
 	{
 		// read the configuration
 		try
@@ -105,7 +105,7 @@ class	AbstractService
 
 			// load the endpoints
 			this.log("Loading endpoints...");
-			let	endpointsOk = this.loadEndpoints(_configFolder, _router);
+			let	endpointsOk = this.loadEndpoints(_configFolder, _router, _isAPI);
 			if (endpointsOk == false)
 			{
 				this.logError("Error configuring the ENDPOINTS. Verify the file endpoints.js!");
@@ -121,7 +121,7 @@ class	AbstractService
 		}
 	}
 
-	loadEndpoints(_configFolder, _router)
+	loadEndpoints(_configFolder, _router, _isAPI = false)
 	{
 		// no router?
 		if (_router == null)
@@ -136,7 +136,7 @@ class	AbstractService
 			let	endpointConfig = require(_configFolder + "endpoints.js");
 
 			// set it up
-			let	ret = this.configureEndpoints(endpointConfig, _router);
+			let	ret = this.configureEndpoints(endpointConfig, _router, _isAPI);
 
 			// no endpoint configured?
 			if ( (ret.forward == 0) && (ret.internal == 0) )
@@ -382,7 +382,7 @@ class	AbstractService
 		return await model.do(_action, _filters, _data, _callbackData, _query);
 	}
 
-	configureEndpoints(_endpoints, _router)
+	configureEndpoints(_endpoints, _router, _isAPI = false)
 	{
 		// configure endpoint to receive pub sub messages
 		_router.post("/pubsub").handler(async ctx => {
@@ -422,9 +422,9 @@ class	AbstractService
 						let	action = actions[j].action;
 						let	authRequirements = ObjUtils.GetValue(actions[j], "auth", null);
 						let	httpMethodOverride = ObjUtils.GetValue(actions[j], "http_method", "").toLowerCase();
-						let	postProcessing = ObjUtils.GetValue(actions[j], "post_processing", null);
+						let	postProcessing = _isAPI ? ObjUtils.GetValue(actions[j], "post_processing", null) : null;
 						let	preProcessing = ObjUtils.GetValue(actions[j], "pre_processing", null);
-						let	cachePostProcessing = ObjUtils.GetValue(actions[j], "cache_post_processing", []);
+						let	cachePostProcessing = _isAPI ? ObjUtils.GetValue(actions[j], "cache_post_processing", []) : [];
 						let	actionParams = ObjUtils.GetValue(actions[j], "action_params", null);
 					
 						// LIST? READ? => GET
@@ -435,7 +435,7 @@ class	AbstractService
 							{
 								countInternal++;
 								_router.get(path).handler(async ctx => {
-									await this.executeEndpoint(ctx, model, action, actionParams, authRequirements);
+									await this.executeEndpoint(ctx, model, action, actionParams, authRequirements, postProcessing, cachePostProcessing);
 								});
 							}
 							// forward
@@ -455,7 +455,7 @@ class	AbstractService
 							{
 								countInternal++;
 								_router.post(path).handler(async ctx => {
-									await this.executeEndpoint(ctx, model, action, actionParams, authRequirements);
+									await this.executeEndpoint(ctx, model, action, actionParams, authRequirements, postProcessing, cachePostProcessing);
 								});
 							}
 							// forward
@@ -475,7 +475,7 @@ class	AbstractService
 							{
 								countInternal++;
 								_router.put(path).handler(async ctx => {
-									await this.executeEndpoint(ctx, model, action, actionParams, authRequirements);
+									await this.executeEndpoint(ctx, model, action, actionParams, authRequirements, postProcessing, cachePostProcessing);
 								});
 							}
 							// forward
@@ -495,7 +495,7 @@ class	AbstractService
 							{
 								countInternal++;
 								_router.delete(path).handler(async ctx => {
-									await this.executeEndpoint(ctx, model, action, actionParams, authRequirements);
+									await this.executeEndpoint(ctx, model, action, actionParams, authRequirements, postProcessing, cachePostProcessing);
 								});
 							}
 							// forward
@@ -675,13 +675,26 @@ class	AbstractService
 		}
 	}
 
-	async	executeEndpoint(_ctx, _model, _action, _actionParams = null, _authRequirements = null)
+	async	executeEndpoint(_ctx, _model, _action, _actionParams = null, _authRequirements = null, _postProcessing = null, )
 	{
 		let	query = QueryUtils.create(_ctx);
 		try
 		{
 			// do the action
 			let	result = await this.do(query, _model, _action);
+
+			// do post processing actions
+			if (result !== null)
+			{
+				let	filters = query.getPathAndQueryParams();
+				let	bodyParams = query.postParams();
+				let authUserId = this.getAuthUserId();
+				console.log("post processing result")
+				result = await this.getContext().postProcessResult(result, _postProcessing, filters, bodyParams, authUserId);
+
+				// cache post processing
+				await this.cachePostProcessing(_cachePostProcessing, filters, bodyParams, result, authUserId);	
+			}
 
 			// response depending on the type of action
 			// LIST?
