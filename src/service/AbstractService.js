@@ -690,6 +690,7 @@ class	AbstractService
 				let	bodyParams = query.postParams();
 				let authUserId = this.getAuthUserId();
 				console.log("post processing result")
+				console.log(_postProcessing)
 				result = await this.getContext().postProcessResult(result, _postProcessing, filters, bodyParams, authUserId);
 
 				// cache post processing
