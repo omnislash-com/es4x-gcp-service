@@ -30,56 +30,6 @@ class	AbstractService
 			return null;
 	}
 
-	// static	async	StartServer(_vertx, _service, _appContext, _configFolder, _modelFolder, _isAPI = false)
-	// {
-	// 	_service.log("Starting service...");
-	
-	// 	// create the VERTX router
-	// 	const	mainRouter = Router.router(_vertx);
-
-	// 	// API? we open everything with CORS
-	// 	if (_isAPI == true)
-	// 	{
-	// 		mainRouter.route().handler(CorsHandler.create("*")
-	// 		.allowedMethod(HttpMethod.GET)
-	// 		.allowedMethod(HttpMethod.POST)
-	// 		.allowedMethod(HttpMethod.OPTIONS)
-	// 		.allowedMethod(HttpMethod.DELETE)
-	// 		.allowedMethod(HttpMethod.PATCH)
-	// 		.allowedMethod(HttpMethod.PUT)
-	// 		.allowedHeader("Content-Type")
-	// 		.allowedHeader("Authorization")
-	// 		.allowedHeader("Access-Control-Allow-Origin")
-	// 		.allowedHeader("Cache-Control")
-	// 		.allowedHeader("Access-Control-Allow-Credentials")
-	// 		.allowedHeader("Access-Control-Request-Method")
-	// 		.allowedHeader("Access-Control-Allow-Headers")
-	// 		.allowCredentials(true));
-	// 	}
-
-	// 	// make sure we accept the body
-	// 	mainRouter.route().handler(BodyHandler.create());
-
-	// 	// init
-	// 	let	ok = await _service.init(_appContext, _configFolder, _modelFolder, mainRouter, _isAPI);
-	// 	if (ok == false)
-	// 	{
-	// 		_service.log('Error launching service: ' + _service.getServiceCode());
-	// 	}
-	// 	else
-	// 	{
-	// 		let port = 8080;
-	// 		_service.log("Launching server on port: " + port);
-			
-	// 		// launch the server
-	// 		_vertx.createHttpServer()
-	// 			.requestHandler(mainRouter)
-	// 			.listen(port);
-			
-	// 		_service.log("SERVICE '" + _service.getServiceCode() + "' is now listening at: http://localhost:" + port + "/");	
-	// 	}
-	// }
-
 	static	async	StartServer(_vertx, _service, _appContext, _configFolder, _modelFolder, _isAPI = false)
 	{
 		_service.log("Starting service...");
