@@ -40,20 +40,20 @@ class	AbstractService
 		// API? we open everything with CORS
 		if (_isAPI == true)
 		{
-			mainRouter.route().handler(CorsHandler.create("*|(capacitor://localhost)")
+			mainRouter.route().handler(CorsHandler.create(".*")
 			.allowedMethod(HttpMethod.GET)
 			.allowedMethod(HttpMethod.POST)
 			.allowedMethod(HttpMethod.OPTIONS)
 			.allowedMethod(HttpMethod.DELETE)
 			.allowedMethod(HttpMethod.PATCH)
 			.allowedMethod(HttpMethod.PUT)
-			.allowedHeader("Access-Control-Request-Method")
-			.allowedHeader("Access-Control-Allow-Credentials")		
-			.allowedHeader("Access-Control-Allow-Origin")
-			.allowedHeader("Access-Control-Allow-Headers")
 			.allowedHeader("Content-Type")
 			.allowedHeader("Authorization")
+			.allowedHeader("Access-Control-Allow-Origin")
 			.allowedHeader("Cache-Control")
+			.allowedHeader("Access-Control-Allow-Credentials")
+			.allowedHeader("Access-Control-Request-Method")
+			.allowedHeader("Access-Control-Allow-Headers")
 			.allowCredentials(true));
 		}
 
