@@ -40,7 +40,7 @@ class	AbstractService
 		// API? we open everything with CORS
 		if (_isAPI == true)
 		{
-			mainRouter.route().handler(CorsHandler.create("((http://)|(https://))localhost:\\d+|(capacitor://localhost)")
+			mainRouter.route().handler(CorsHandler.create("((http://)|(https://))localhost:\\d+|(capacitor://localhost)|\\*")
 			.allowedMethod(HttpMethod.GET)
 			.allowedMethod(HttpMethod.POST)
 			.allowedMethod(HttpMethod.OPTIONS)
