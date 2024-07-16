@@ -859,6 +859,11 @@ class	AbstractService
 	{
 		return await this.getContext().doOnModelRemote(_service, _model, _action, _filters, _data);
 	}
+
+	getWebClient()
+	{
+		return this.getContext().getWebClient();
+	}
 }
 
 module.exports = {
