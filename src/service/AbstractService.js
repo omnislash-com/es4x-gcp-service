@@ -163,7 +163,7 @@ class	AbstractService
 		// load the config
     let	serviceConfig = null;
     try {
-      let file = _configFolder + "service.js";
+      let file = "C:/Users/bro32/PycharmProjects/spr-service-org/config/service.js";
       console.log("Loading service config from: " + file);
       serviceConfig = require(file);
       // load the service config
