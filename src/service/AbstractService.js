@@ -163,8 +163,16 @@ class	AbstractService
 		// load the config
     let	serviceConfig = null;
     try {
-      let file = "C:/Users/bro32/PycharmProjects/spr-service-org/config/service.js";
+      const path = require('path');
+      const fs = require('fs');
+      let file = path.join(_configFolder, "service.js");
       console.log("Loading service config from: " + file);
+
+      if (!fs.existsSync(file)) {
+        console.log("File does not exist: " + file);
+        return false;
+      }
+      
       serviceConfig = require(file);
       // load the service config
     }
