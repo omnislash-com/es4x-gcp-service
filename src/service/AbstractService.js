@@ -161,7 +161,15 @@ class	AbstractService
 	{
     console.log(1)
 		// load the config
-		let	serviceConfig = require(_configFolder + "service.js");
+    try {
+      let	serviceConfig = require(_configFolder + "service.js");
+      // load the service config
+    }
+    catch (e) { 
+      console.log("Error loading the service config: " + e);
+      return false;
+    }
+		
     console.log(2)
 
 		// save the service code
