@@ -163,22 +163,54 @@ class	AbstractService
 		// load the config
     let	serviceConfig = null;
     try {
-      const path = require('path');
-      const fs = require('fs');
-      let file = path.join(_configFolder, "service.js");
+      let file =  `../config/service.js`;
       console.log("Loading service config from: " + file);
-
-      if (!fs.existsSync(file)) {
-        console.log("File does not exist: " + file);
-        return false;
-      }
-      
       serviceConfig = require(file);
+      console.log("Service config loaded from 1: " + file);
       // load the service config
     }
     catch (e) { 
       console.log("Error loading the service config: " + e);
-      return false;
+    }
+    try {
+      let file =  `../../config/service.js`;
+      console.log("Loading service config from: " + file);
+      serviceConfig = require(file);
+      console.log("Service config loaded from 2: " + file);
+      // load the service config
+    }
+    catch (e) { 
+      console.log("Error loading the service config: " + e);
+    }
+    try {
+      let file =  `../../../config/service.js`;
+      console.log("Loading service config from: " + file);
+      serviceConfig = require(file);
+      console.log("Service config loaded from 3: " + file);
+      // load the service config
+    }
+    catch (e) { 
+      console.log("Error loading the service config: " + e);
+    }
+    try {
+      let file =  `../../../../config/service.js`;
+      console.log("Loading service config from: " + file);
+      serviceConfig = require(file);
+      console.log("Service config loaded from 4: " + file);
+      // load the service config
+    }
+    catch (e) { 
+      console.log("Error loading the service config: " + e);
+    }
+    try {
+      let file =  `../../../../../config/service.js`;
+      console.log("Loading service config from: " + file);
+      serviceConfig = require(file);
+      console.log("Service config loaded from 5: " + file);
+      // load the service config
+    }
+    catch (e) { 
+      console.log("Error loading the service config: " + e);
     }
 		
     console.log(2)
