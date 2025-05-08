@@ -162,9 +162,8 @@ class	AbstractService
     console.log(1)
 		// load the config
     let	serviceConfig = null;
-    
     try {
-      let file =  `../../../../config/service.js`;
+      let file =  _configFolder + `service.js`;
       console.log("Loading service config from: " + file);
       serviceConfig = require(file);
       console.log("Service config loaded from 4: " + file);
