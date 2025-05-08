@@ -159,44 +159,33 @@ class	AbstractService
 
 	loadConfigService(_configFolder, _modelFolder)
 	{
-    console.log(1)
 		// load the config
     let	serviceConfig = null;
     try {
       let file =  _configFolder + `service.js`;
-      console.log("Loading service config from: " + file);
       serviceConfig = require(file);
-      console.log("Service config loaded from 4: " + file);
       // load the service config
     } catch (e) { 
       console.log("Error loading the service config: " + e);
       return false
     }
 		
-    console.log(2)
-
 		// save the service code
 		this.__code = ObjUtils.GetValueToString(serviceConfig, "service");
-    console.log(3)
 		if (StringUtils.IsEmpty(this.__code) == true)
 		{
-      console.log(4)
 			this.logError("Error loading the COMMON configuration: the service code is empty!");
 			return false;
 		}
 
 		// create all the models
 		let	modelsConfig = ObjUtils.GetValue(serviceConfig, "models", []);
-    console.log(4.5)
 		let	modelsOk = this.createModelMgr(modelsConfig, _modelFolder);
-    console.log(5)
 		if (modelsOk == false)
 		{
-      console.log(6)
 			this.logError("Error loading the COMMON configuration: we didn't find any model to add!");
 			return false;
 		}
-    console.log(7)
 
 		// all good
 		return true;
